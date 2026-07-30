@@ -1,0 +1,13 @@
+.container {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    border: 1px solid red;
+    margin-bottom: 10px;
+}
+.input__group{
+  border:1px solid green;
+  display: flex;
+  flex-direction: column;
+  row-gap:10px;
+}

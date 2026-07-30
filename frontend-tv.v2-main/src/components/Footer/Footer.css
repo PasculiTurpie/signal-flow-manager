@@ -1,0 +1,19 @@
+.footer {
+  display         : flex;
+  justify-content : center;
+  align-items     : center;
+  width           : 100%;
+  height          :fit-content;
+  padding:32px 40px ;
+  background-color: #000000;
+  text-align: center;
+}
+
+.footer__paragraph {
+  color         : #fff;
+  font-size     : 18px;
+  border-radius : 0.5em;
+  font-weight   : 600;
+  letter-spacing: .07em;
+  margin: 0;
+}

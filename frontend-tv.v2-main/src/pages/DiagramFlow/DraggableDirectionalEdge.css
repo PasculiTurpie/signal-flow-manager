@@ -1,0 +1,111 @@
+/* =========================================================
+   Edge animado (línea)
+   ========================================================= */
+
+.edge-stroke-animated {
+  stroke-dasharray: 6 6;
+  animation: edge-dash-move 1s linear infinite;
+}
+
+@keyframes edge-dash-move {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+/* =========================================================
+   TOOLTIP DE EDGE (Portal - fixed)
+   ========================================================= */
+
+.edge-tooltip {
+  position: fixed; /* 🔥 clave para portal */
+  z-index: 2147483647 !important;
+
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+
+  padding: 8px 10px;
+  border-radius: 10px;
+
+  font-size: 12px;
+  line-height: 1.35;
+
+  max-width: 260px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+
+  pointer-events: auto; /* 🔥 evita parpadeo */
+  user-select: none;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+/* Tooltip fijado (click) */
+.edge-tooltip--sticky {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* =========================================================
+   Contenido interno del tooltip
+   ========================================================= */
+
+.edge-tooltip__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.edge-tooltip__pin {
+  opacity: 0.85;
+  font-size: 13px;
+}
+
+.edge-tooltip__body {
+  opacity: 0.95;
+  word-break: break-word;
+}
+
+.edge-tooltip__extra {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* =========================================================
+   Tooltip de estado "Guardando…"
+   (foreignObject SVG)
+   ========================================================= */
+
+.edge-saving-tooltip {
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(13, 110, 253, 0.85);
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   Ajustes de layering React Flow
+   (no afectan el portal)
+   ========================================================= */
+
+.react-flow__renderer {
+  z-index: 0;
+}
+
+.react-flow__edge-path {
+  z-index: 1;
+}
+
+.react-flow__node {
+  z-index: 2;
+}

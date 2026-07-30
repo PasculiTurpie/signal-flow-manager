@@ -1,0 +1,38 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "celebrate": "^15.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.13.0",
+    "multer": "^2.0.2",
+    "ssh2": "^1.16.0",
+    "xlsx": "^0.18.5",
+    "morgan": "^1.10.0"
+  },
+  "name": "backend-tv.v2",
+  "version": "1.0.0",
+  "description": "Se creara la conexion a BD mongodb\r git",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test src/**/*.test.js",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "author": "Jorge R. Sepúlveda Turpie",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "standard": "^17.1.2"
+  },
+  "eslintConfig": {
+    "extends": "standard"
+  }
+}

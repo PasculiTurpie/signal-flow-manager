@@ -1,0 +1,7 @@
+.container__image{
+    display: flex;
+    justify-content: center;
+}
+.title__image{
+    font-size: .7em;
+}

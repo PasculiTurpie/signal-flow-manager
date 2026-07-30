@@ -1,0 +1,34 @@
+.container__result {
+    width          : 100%;
+    display        : flex;
+    padding        : 0 16px;
+    margin         : 0 auto;
+    min-height     : calc(100vh - 274px);
+}
+
+.card__layout--search {
+    width     : 100%;
+    margin-top: 30px;
+    padding   : 0 16px;
+}
+
+.card__layout--search .card__grid {
+    justify-content: center;
+}
+
+.card__heading--search {
+    justify-content: center;
+    flex-wrap      : wrap;
+    text-align     : center;
+    gap            : 8px;
+}
+
+.card__heading--search .card__total {
+    margin-right: 6px;
+}
+
+.search__subtitle {
+    margin    : 4px 0 24px;
+    text-align: center;
+    color     : #4b5563;
+}

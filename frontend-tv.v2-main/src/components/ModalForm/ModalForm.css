@@ -1,0 +1,10 @@
+.modal{
+  width: 100dvw;
+  height: 100dvh;
+  background-color: rgba(0, 0, 0, 0.467);
+}
+.modal__container{
+  background-color: beige;
+  width: 300px;
+  height: 300px;
+}

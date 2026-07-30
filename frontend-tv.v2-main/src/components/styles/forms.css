@@ -1,0 +1,304 @@
+/* ===================== Variables globales ===================== */
+:root {
+  --color-primary        : #2563eb;
+  --color-primary-600    : #1d4ed8;
+  --color-primary-100    : #eff6ff;
+  --color-success        : #16a34a;
+  --color-warning        : #fbbf24;
+  --color-warning-600    : #f59e0b;
+  --color-danger         : #dc2626;
+  --color-danger-600     : #b91c1c;
+  --color-text           : #0f172a;
+  --color-muted          : #475569;
+  --color-border         : rgba(148, 163, 184, 0.35);
+  --color-surface        : #ffffff;
+  --color-surface-alt    : #f8fafc;
+  --radius-sm            : 12px;
+  --radius-md            : 20px;
+  --h-control            : 44px;
+  --shadow-card          : 0 18px 40px rgba(15, 23, 42, 0.12);
+  --shadow-card-soft     : 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* ===================== Layout ===================== */
+.form__add {
+  width         : min(660px, 100%);
+  background    : var(--color-surface);
+  border-radius : var(--radius-md);
+  box-shadow    : var(--shadow-card);
+  padding       : 32px;
+  border        : 1px solid var(--color-border);
+  display       : flex;
+  flex-direction: column;
+  gap           : 24px;
+  margin:50px 0px
+}
+
+.form__titulo {
+  font-size  : 1.6rem;
+  font-weight: 700;
+  color      : var(--color-text);
+  margin     : 0;
+}
+
+.rows__group {
+  display              : grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap                  : 24px;
+  align-items          : start;
+}
+
+.rows__group--auto {
+  align-items: start;
+}
+
+.columns__group {
+  min-width     : 0;
+  display       : flex;
+  flex-direction: column;
+  gap           : 16px;
+}
+
+@media (max-width: 860px) {
+  .form__add {
+    padding: 24px;
+  }
+
+  .rows__group {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===================== Form groups ===================== */
+.form__group {
+  width         : 100%;
+  display       : flex;
+  flex-direction: column;
+  gap           : 8px;
+}
+
+.form__group-label {
+  font-weight: 600;
+  color      : var(--color-muted);
+  font-size  : 0.95rem;
+}
+
+.form__group-input {
+  width        : 100%;
+  min-height   : var(--h-control);
+  border       : 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding      : 10px 14px;
+  outline      : none;
+  background   : var(--color-surface-alt);
+  font-size    : 0.95rem;
+  color        : var(--color-text);
+  transition   : border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.form__group-input:focus {
+  border-color: var(--color-primary);
+  background  : var(--color-surface);
+  box-shadow  : 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.form__group.has-error .form__group-input {
+  border-color: var(--color-danger);
+  box-shadow  : 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.form__group-error {
+  margin-top: 0;
+  font-size : 0.85rem;
+  color     : var(--color-danger);
+  font-weight: 500;
+}
+
+/* ===================== Botones ===================== */
+.button {
+  display       : inline-flex;
+  align-items   : center;
+  justify-content: center;
+  gap           : 0.5rem;
+  border        : 1px solid transparent;
+  border-radius : var(--radius-sm);
+  padding       : 0 1.5rem;
+  min-height    : var(--h-control);
+  font-weight   : 600;
+  font-size     : 0.95rem;
+  cursor        : pointer;
+  background    : var(--color-primary);
+  color         : #fff;
+  box-shadow    : var(--shadow-card-soft);
+  transition    : background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button[disabled] {
+  opacity    : 0.6;
+  cursor     : not-allowed;
+  box-shadow : none;
+  transform  : none;
+}
+
+.btn-primary {
+  background  : var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background  : var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  box-shadow  : 0 12px 24px rgba(29, 78, 216, 0.18);
+}
+
+.btn-danger {
+  background  : var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+  background  : var(--color-danger-600);
+  border-color: var(--color-danger-600);
+  box-shadow  : 0 12px 24px rgba(220, 38, 38, 0.2);
+}
+
+.btn-warning {
+  background  : var(--color-warning);
+  border-color: var(--color-warning);
+  color       : #1f2937;
+}
+
+.btn-warning:hover,
+.btn-warning:focus-visible {
+  background  : var(--color-warning-600);
+  border-color: var(--color-warning-600);
+  color       : #0f172a;
+  box-shadow  : 0 12px 24px rgba(245, 158, 11, 0.2);
+}
+
+.form__actions {
+  display        : flex;
+  gap            : 12px;
+  justify-content: flex-end;
+  align-items    : center;
+  flex-wrap      : wrap;
+  margin-top     : 8px;
+}
+
+/* ===================== React-Select ===================== */
+.form__select {
+  width: 100%;
+}
+
+/* Control */
+.rs__control {
+  min-height   : var(--h-control);
+  border-radius: var(--radius-sm);
+  border       : 1px solid var(--color-border);
+  background   : #fff;
+  box-shadow   : none;
+}
+
+.rs__control--is-focused {
+  border-color: var(--color-primary);
+  box-shadow  : 0 0 0 3px rgba(55, 93, 157, 0.15);
+}
+
+/* Value container */
+.rs__value-container {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: flex-start;
+  gap        : 6px;
+  padding    : 8px 10px;
+}
+
+/* Single value */
+.rs__single-value {
+  color      : var(--color-text);
+  font-weight: 500;
+}
+
+/* Placeholder */
+.rs__placeholder {
+  color: var(--color-muted);
+}
+
+/* Indicators */
+.rs__indicator-separator {
+  display: none;
+}
+
+.rs__indicators {
+  gap: 2px;
+}
+
+/* Menu */
+.rs__menu {
+  border-radius: var(--radius-sm);
+  border       : 1px solid var(--color-border);
+  box-shadow   : var(--shadow-card);
+  overflow     : hidden;
+  z-index      : 5;
+}
+
+.rs__menu-list {
+  padding   : 6px 0;
+  max-height: 260px;
+}
+
+/* Options */
+.rs__option {
+  padding: 8px 12px;
+  cursor : pointer;
+}
+
+.rs__option--is-focused {
+  background: #f3f4f6;
+}
+
+.rs__option--is-selected {
+  background : var(--color-primary-100);
+  color      : var(--color-primary);
+  font-weight: 700;
+}
+
+/* Multi-value (chips) */
+.rs__multi-value {
+  background   : var(--color-primary-100);
+  border-radius: 9999px;
+}
+
+.rs__multi-value__label {
+  color      : var(--color-primary);
+  font-weight: 600;
+  padding    : 2px 8px;
+}
+
+.rs__multi-value__remove {
+  color        : var(--color-primary);
+  opacity      : 0.8;
+  border-radius: 9999px;
+}
+
+.rs__multi-value__remove:hover {
+  background: rgba(55, 93, 157, 0.12);
+  color     : var(--color-primary);
+}
+
+/* Error state */
+.form__group.has-error .rs__control {
+  border-color: #ef4444;
+  box-shadow  : 0 0 0 3px rgba(239, 68, 68, 0.12);
+}

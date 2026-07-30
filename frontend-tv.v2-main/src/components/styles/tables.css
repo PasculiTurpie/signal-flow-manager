@@ -1,0 +1,191 @@
+/* ---------- Tabla base ---------- */
+.table,
+.list__table {
+  width          : 100%;
+  border-collapse: separate;
+  border-spacing : 0;
+  margin-top     : 20px;
+  background     : var(--surface-base, #ffffff);
+  border         : 1px solid var(--border-subtle, rgba(148, 163, 184, 0.35));
+  border-radius  : 20px;
+  box-shadow     : var(--shadow-soft, 0 18px 40px rgba(15, 23, 42, 0.08));
+  overflow       : hidden;
+  font-size      : 0.95rem;
+  color          : var(--text-strong, #0f172a);
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table caption,
+.list__table caption {
+  caption-side: bottom;
+  padding     : 12px 18px;
+  font-size   : 0.85rem;
+  color       : var(--text-muted, #475569);
+}
+
+.table thead,
+.list__table thead {
+  background: var(--surface-alt, #f8fafc);
+}
+
+.table thead th,
+.list__table thead th {
+  padding       : 14px 18px;
+  text-align    : center;
+  font-weight   : 600;
+  letter-spacing: 0.02em;
+  color         : var(--accent-primary, #2563eb);
+  border-bottom : 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.table tbody,
+.list__table tbody {
+  background: transparent;
+}
+
+.table tbody tr,
+.list__table tbody tr {
+  transition: background-color 0.3s ease;
+}
+
+.table tbody tr:nth-child(even),
+.list__table tbody tr:nth-child(even) {
+  background-color: var(--stripe-color, #f9f9f9);
+}
+
+.table tbody tr:hover,
+.list__table tbody tr:hover {
+  background-color: var(--surface-hover, #f1f5f9);
+}
+
+.table tbody td,
+.list__table tbody td {
+  padding       : 12px 18px;
+  border-bottom : 1px solid rgba(148, 163, 184, 0.16);
+  vertical-align: middle;
+  transition    : background-color 0.3s ease;
+}
+
+.table tbody tr:last-child td,
+.list__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---------- Alineación de acciones ---------- */
+.table .action,
+.list__table .action,
+.table .actions,
+.list__table .actions {
+  text-align      : center;
+  display         : flex;
+  justify-content : center;
+  align-items     : center;
+  gap             : 8px;
+  white-space     : nowrap;
+}
+
+/* ---------- Botones en tabla ---------- */
+.table-btn {
+  display        : inline-flex;
+  align-items    : center;
+  justify-content: center;
+  gap            : 0.4rem;
+  min-height     : 38px;
+  min-width      : 108px;
+  padding        : 0.55rem 1.35rem;
+  border-radius  : 14px;
+  border         : 1px solid var(--border-subtle, rgba(148, 163, 184, 0.35));
+  background     : var(--surface-alt, #f8fafc);
+  color          : var(--text-strong, #0f172a);
+  font-size      : 0.85rem;
+  font-weight    : 600;
+  cursor         : pointer;
+  position       : relative;
+  isolation      : isolate;
+  overflow       : hidden;
+  transition     : background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.table-btn::after {
+  content   : "";
+  position  : absolute;
+  inset     : 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0));
+  opacity   : 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.table-btn:hover::after,
+.table-btn:focus-visible::after {
+  opacity: 1;
+}
+
+.table-btn:hover,
+.table-btn:focus-visible {
+  background : var(--surface-hover, #f1f5f9);
+  border-color: color-mix(in srgb, var(--accent-primary, #2563eb) 30%, rgba(148, 163, 184, 0.35));
+  box-shadow : 0 10px 20px rgba(15, 23, 42, 0.12);
+  outline    : none;
+}
+
+.table-btn:active {
+  transform: translateY(1px);
+}
+
+.table-btn[disabled] {
+  opacity   : 0.6;
+  cursor    : not-allowed;
+  box-shadow: none;
+  transform : none;
+}
+
+.table-btn-primary {
+  background     : #facc15;
+  border-color   : #facc15;
+  color          : #1f2937;
+  box-shadow     : 0 6px 14px rgba(250, 204, 21, 0.35);
+  border-radius  : 18px 18px 10px 18px;
+}
+
+.table-btn-primary:hover,
+.table-btn-primary:focus-visible {
+  background  : #f59e0b;
+  border-color: #f59e0b;
+  color       : #111827;
+  box-shadow  : 0 10px 22px rgba(245, 158, 11, 0.38);
+}
+
+.table-btn-danger {
+  background     : #ef4444;
+  border-color   : #ef4444;
+  color          : #fff;
+  box-shadow     : 0 6px 14px rgba(239, 68, 68, 0.35);
+  border-radius  : 18px 10px 18px 18px;
+}
+
+.table-btn-danger:hover,
+.table-btn-danger:focus-visible {
+  background  : #dc2626;
+  border-color: #dc2626;
+  box-shadow  : 0 10px 22px rgba(220, 38, 38, 0.38);
+}
+
+@media (max-width: 768px) {
+  .table,
+  .list__table {
+    border-radius: 16px;
+  }
+
+  .table thead th,
+  .list__table thead th,
+  .table tbody td,
+  .list__table tbody td {
+    padding: 12px 14px;
+  }
+}

@@ -1,0 +1,36 @@
+:global(.form__add).formGrid {
+    width: 100%;
+    max-width: 1120px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.rows__group {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--form-gap, 24px);
+    align-items: flex-start;
+    grid-auto-flow: row dense;
+}
+
+.columns__group {
+    display: contents;
+}
+
+.submitButton {
+    align-self: flex-end;
+}
+
+@media (max-width: 1200px) {
+    .rows__group {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .rows__group {
+        grid-template-columns: 1fr;
+    }
+}

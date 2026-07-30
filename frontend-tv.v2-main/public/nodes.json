@@ -1,0 +1,98 @@
+{
+    "nodes": [
+        {
+            "id": "1",
+            "type": "satelite",
+            "position": { "x": 20, "y": 10 },
+            "data": {
+                "label": "IS21",
+                "tooltip": "Cisco ISR4331 - IP: 192.168.1.1"
+            }
+        },
+        {
+            "id": "2",
+            "type": "ird",
+            "position": { "x": 180, "y": 180 },
+            "data": {
+                "label": "IRD",
+                "tooltip": "Cisco ISR4331 - IP: 192.168.1.1"
+            }
+        },
+        {
+            "id": "3",
+            "type": "switch",
+            "position": { "x": 330, "y": 10 },
+            "data": { "label": "Switch 01" }
+        },
+        {
+            "id": "4",
+            "type": "dcm",
+            "position": { "x": 490, "y": 180 },
+            "data": {
+                "color": "red",
+                "label": "DCM",
+                "url": "http://192.168.1.10"
+            }
+        },
+        {
+            "id": "5",
+            "type": "ateme",
+            "position": { "x": 680, "y": 10 },
+            "data": {
+                "label": "Ateme Titan",
+                "url": "http://172.19.14.120",
+                "border": "none"
+            }
+        },
+        {
+            "id": "6",
+            "type": "encryptor",
+            "position": { "x": 900, "y": 180 },
+            "data": { "label": "Encriptador VMX" }
+        },
+        {
+            "id": "7",
+            "type": "router",
+            "position": { "x": 1110, "y": 10 },
+            "data": { "label": "Router / MPLS" }
+        }
+    ],
+    "edges": [
+        {
+            "id": "e1-2",
+            "source": "1",
+            "target": "2",
+            "label": "SDI / P_1"
+        },
+        {
+            "id": "e2-3",
+            "source": "2",
+            "target": "3",
+            "label": "172.18.19.20"
+        },
+        {
+            "id": "e5-6",
+            "source": "3",
+            "target": "4",
+            "label": "172.18.19.34"
+        },
+        {
+            "id": "e6-7",
+            "source": "4",
+            "target": "5",
+            "label": "172.18.19.34"
+        },
+        {
+            "id": "e7-8",
+            "source": "5",
+            "target": "6",
+            "label": "172.18.19.34"
+        },
+        {
+            "id": "e7-9",
+            "source": "6",
+            "target": "7",
+            "label": "172.18.19.34"
+        }
+    ]
+}

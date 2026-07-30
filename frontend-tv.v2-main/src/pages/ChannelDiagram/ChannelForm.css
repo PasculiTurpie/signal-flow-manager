@@ -1,0 +1,273 @@
+/* Layout general */
+.chf__wrapper {
+  max-width: 980px;
+  margin   : 0 auto;
+  padding  : 16px;
+}
+
+.chf__breadcrumb {
+  margin-bottom: 6px;
+}
+
+.chf__title {
+  margin     : 0 0 12px 0;
+  font-size  : 22px;
+  font-weight: 700;
+  color      : #111827;
+}
+
+/* Form */
+.chf__form {
+  display: grid;
+  gap    : 12px;
+}
+
+/* Fieldset */
+.chf__fieldset {
+  border       : 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding      : 12px;
+  background   : #ffffff;
+  box-shadow   :
+    0 1px 2px rgba(0, 0, 0, .04),
+    0 8px 24px rgba(55, 93, 157, 0.06);
+}
+
+.chf__legend {
+  padding    : 0 8px;
+  font-weight: 700;
+  color      : #375d9d;
+}
+
+/* Row para el select + contador de disponibles */
+.chf__row {
+  display              : grid;
+  grid-template-columns: 1fr auto;
+  gap                  : 10px;
+  align-items          : center;
+}
+
+.chf__select-inline {
+  min-width: 280px;
+}
+
+.chf__available {
+  text-align: right;
+}
+
+.chf__badge--primary {
+  background: #eef2ff;
+  border    : 1px solid #dbeafe;
+  color     : #375d9d;
+}
+
+/* Grid helpers */
+.chf__grid {
+  display: grid;
+  gap    : 10px;
+}
+
+.chf__grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.chf__grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.chf__grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.chf__grid--align-end {
+  align-items: end;
+}
+
+.chf__row-gap {
+  row-gap: 10px;
+}
+
+/* Labels & Inputs */
+.chf__label {
+  display  : grid;
+  gap      : 6px;
+  font-size: 13px;
+  color    : #374151;
+}
+
+.chf__input {
+  height       : 38px;
+  border       : 1px solid #d1d5db;
+  border-radius: 8px;
+  padding      : 0 10px;
+  outline      : none;
+  transition   : box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+  background   : #fff;
+}
+
+.chf__input:focus {
+  border-color: #375d9d;
+  box-shadow  : 0 0 0 3px rgba(55, 93, 157, 0.20);
+}
+
+.chf__input::placeholder {
+  color: #9ca3af;
+}
+
+/* Select wrapper (react-select ya toma altura desde styles JS) */
+.chf__select {
+  width: 100%;
+}
+
+/* Messages & Lists */
+.chf__error {
+  margin-top: 4px;
+  font-size : 12px;
+  color     : #b91c1c;
+}
+
+.chf__list {
+  margin-top  : 10px;
+  padding-left: 18px;
+}
+
+.chf__list-item {
+  margin   : 6px 0;
+  color    : #374151;
+  font-size: 14px;
+}
+
+.chf__badge {
+  display      : inline-block;
+  margin-left  : 8px;
+  padding      : 2px 6px;
+  background   : #f3f4f6;
+  border       : 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size    : 12px;
+  color        : #6b7280;
+}
+
+.chf__badge--muted {
+  background  : #eef2ff;
+  border-color: #e0e7ff;
+  color       : #4f46e5;
+}
+
+.chf__muted {
+  color: #6b7280;
+}
+
+/* Empty / Alerts */
+.chf__empty {
+  border       : 1px dashed #cbd5e1;
+  background   : #f8fafc;
+  padding      : 16px;
+  border-radius: 12px;
+}
+
+.chf__alert {
+  padding      : 12px;
+  border-radius: 10px;
+}
+
+.chf__alert--error {
+  border    : 1px solid #fee2e2;
+  background: #fef2f2;
+  color     : #991b1b;
+}
+
+.chf__alert--info {
+  border    : 1px solid #bfdbfe;
+  background: #eff6ff;
+  color     : #1d4ed8;
+}
+
+.chf__alert--muted {
+  border    : 1px solid #e2e8f0;
+  background: #f8fafc;
+  color     : #475569;
+}
+
+.chf__alert-actions {
+  margin-top: 8px;
+}
+
+/* Buttons */
+.chf__actions {
+  display   : flex;
+  justify-content: left;
+  gap       : 10px;
+  margin-top: 4px;
+}
+
+.chf__container{
+  display: flex;
+  justify-content: end;
+}
+
+.chf__btn {
+  height       : 38px;
+  padding      : 0 14px;
+  border       : 1px solid #d1d5db;
+  background   : #fff;
+  border-radius: 10px;
+  font-weight  : 600;
+  cursor       : pointer;
+  transition   : transform .06s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease;
+}
+
+.chf__btn:hover {
+  background: #f9fafb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.chf__btn:active {
+  transform: translateY(1px);
+}
+
+.chf__btn--primary {
+  background  : #375d9d;
+  color       : #fff;
+  border-color: #375d9d;
+}
+
+.chf__btn--primary:hover {
+  background  : #2f4f89;
+  border-color: #2f4f89;
+}
+
+.chf__btn--secondary {
+  color       : #375d9d;
+  border-color: #cbd5e1;
+}
+.label-main{
+  width: 367.38px;
+}
+
+/* Responsive */
+@media (max-width: 920px) {
+  .chf__grid--4 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chf__row {
+    grid-template-columns: 1fr;
+  }
+
+  .chf__available {
+    text-align: left;
+  }
+}
+.btn--enlace{
+  margin-top: 10px;
+}
+
+@media (max-width: 680px) {
+
+  .chf__grid--3,
+  .chf__grid--2,
+  .chf__grid--4 {
+    grid-template-columns: 1fr;
+  }
+}

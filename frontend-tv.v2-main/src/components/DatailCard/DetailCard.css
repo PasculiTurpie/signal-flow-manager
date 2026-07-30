@@ -1,0 +1,187 @@
+.container__card-detail {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    padding-top: 80px;
+}
+
+.card-detail-container {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.card-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+
+.card__detail-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+}
+
+.card-detail-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.card__detail-numbers {
+    display: flex;
+    justify-content: space-between;
+      
+    font-size: 1rem;
+    color: #555;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.card__detail-numbers span {
+    flex: 1;
+    text-align: center;
+    font-size: 19px;
+
+}
+strong{
+        color: #07276d;
+}
+
+.card__detail-button {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.button-back {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+.text__container {
+    display: flex;
+    width: 100%;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    justify-content: space-around;
+    text-align: center;
+}
+.card__detail-info{
+    color:rgb(4, 34, 99);
+    font-size: 20px;
+    font-weight: bold;
+}
+.btn-disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  border: 1px solid #aaa;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.btn-disabled:hover {
+  background-color: #ccc;
+  color: #666;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Título del modal */
+.modal-contact__title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 24px;
+    text-align: center;
+    color: #333;
+}
+
+/* Tabla principal */
+.modal-contact__table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* Cabecera */
+.modal-contact__table thead {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.modal-contact__table th {
+    text-align: left;
+    padding: 14px 18px;
+    font-size: 1rem;
+}
+
+/* Filas */
+.modal-contact__table td {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+    color: #333;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Alternancia de color en filas */
+.modal-contact__row:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+.modal-contact__row:nth-child(odd) {
+    background-color: #eef2ff;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .modal-contact__table {
+        font-size: 0.85rem;
+    }
+
+    .modal-contact__title {
+        font-size: 1.4rem;
+    }
+
+    .modal-contact__table th,
+    .modal-contact__table td {
+        padding: 10px 12px;
+    }
+}

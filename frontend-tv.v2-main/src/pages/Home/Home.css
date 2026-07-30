@@ -1,0 +1,46 @@
+.container__cards {
+  width          : 80%;
+  display        : flex;
+  flex-direction : column;
+  justify-content: center;
+  align-items: center;
+  margin:0 auto;
+  flex-wrap      : wrap;
+  gap            : 30px;
+  padding        : 50px 0;
+  min-height     : calc(100dvh - 301px);
+}
+
+/* Tablets (≥ 768px) */
+@media (min-width: 768px) {
+  .container__cards {
+    flex-direction : row;
+    justify-content: space-between;
+  }
+}
+
+/* Laptops/Desktops (≥ 1024px) */
+@media (min-width: 1024px) {
+  .container__cards {
+    width  : 90%;
+    gap    : 40px;
+    padding: 60px 0;
+  }
+}
+
+/* Pantallas grandes (≥ 1440px) */
+@media (min-width: 1440px) {
+  .container__cards {
+    width: 70%;
+    gap  : 50px;
+  }
+}
+
+/* Móviles pequeños (≤ 480px) */
+@media (max-width: 480px) {
+  .container__cards {
+    width  : 95%;
+    gap    : 20px;
+    padding: 30px 0;
+  }
+}

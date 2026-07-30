@@ -1,0 +1,255 @@
+.container__header{
+    position: absolute;
+    top: 250px;
+    left: 250px;
+    display: flex;
+    width: fit-content;
+    height: fit-content;
+    align-items: center;
+    margin:0 auto;
+    border:2px solid #00aeff;
+    background-color: #e7ecee44;
+    margin-top:30px;
+    border-radius: 5px;
+    padding:10px 15px;
+    column-gap: 15px;
+}
+.title__channel{
+    font-size: 16px;
+}
+.logo__channel{
+    width: 80px;
+}
+.button__back{
+    border: 1px solid red;
+    border-radius: 5px;
+    margin-top:15px;
+    padding:5px 10px;
+    font-weight: 600;
+    transition: .5s all ease;
+}
+.button__back:hover{
+    border: 1px solid #fff;
+    color:#fff;
+    background: red;
+}
+
+.container__flow{
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+}
+
+.diagram-flow-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding-right: 0;
+    transition: padding-right 0.25s ease;
+    overflow: hidden;
+}
+
+/* .diagram-flow-wrapper--with-sidebar {
+    padding-right: min(340px, 100%);
+} */
+
+.dashboard_flow {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.diagram-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(340px, 100%);
+    height: 100%;
+    padding: 24px 20px 28px;
+    background: #f8fafc;
+    border-left: 1px solid #e2e8f0;
+    box-shadow: -6px 0 18px rgba(15, 23, 42, 0.12);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    margin-bottom:50px;
+    overflow-y: auto;
+}
+
+.diagram-sidebar.is-open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.diagram-sidebar__content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    height: 100%;
+}
+
+.diagram-sidebar__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.diagram-sidebar__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.diagram-sidebar__close {
+    border: none;
+    background: #e2e8f0;
+    color: #0f172a;
+    font-size: 1.1rem;
+    font-weight: 600;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.diagram-sidebar__close:hover,
+.diagram-sidebar__close:focus {
+    background: #0f172a;
+    color: #f8fafc;
+}
+
+.diagram-sidebar__image {
+    width: 30%;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+}
+.diagram-sidebar__image img {
+  display: block;
+  object-fit: cover;
+}
+
+.diagram-sidebar__list {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding-bottom: 30px;
+}
+
+.diagram-sidebar__list-item {
+    display: grid;
+    gap: 4px;
+}
+
+.diagram-sidebar__list-item dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0;
+}
+
+.diagram-sidebar__list-item dd {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.diagram-sidebar__link {
+    color: #2563eb;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.diagram-sidebar__link:hover,
+.diagram-sidebar__link:focus {
+    text-decoration: none;
+}
+
+.diagram-sidebar__status {
+    margin: 0;
+    margin-top: 4px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: #0f172a;
+    background-color: #e2e8f0;
+}
+
+.diagram-sidebar__status + .diagram-sidebar__status {
+    margin-top: 8px;
+}
+
+.diagram-sidebar__status--loading {
+    background-color: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+}
+
+.diagram-sidebar__status--warning {
+    background-color: rgba(250, 204, 21, 0.2);
+    color: #b45309;
+}
+
+.diagram-sidebar__status--error {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: #b91c1c;
+}
+
+.diagram-sidebar__empty,
+.diagram-sidebar__empty-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+    color: #475569;
+}
+
+.diagram-sidebar__empty {
+    height: 100%;
+    padding: 0 12px;
+}
+
+.diagram-sidebar__empty h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #0f172a;
+}
+
+.diagram-sidebar__empty-section {
+    border: 1px dashed #cbd5f5;
+    border-radius: 10px;
+    padding: 18px 14px;
+}
+
+.read-only-banner {
+    position: absolute;
+    top: 30px;
+    left: 15%;
+    transform: translateX(-50%);
+    z-index: 20;
+    max-width: 250px;
+    width: calc(100% - 48px);
+    padding: 10px 16px;
+    border-radius: 999px;
+    background-color: rgba(254, 243, 199, 0.95);
+    border: 1px solid #fcd34d;
+    color: #92400e;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(6px);
+}

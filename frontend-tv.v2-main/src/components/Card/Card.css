@@ -1,0 +1,264 @@
+/* Layout */
+.card__layout {
+    display       : flex;
+    width         : 100%;
+    align-items   : center;
+    flex-direction: column;
+    margin        : auto;
+    margin-top    : 30px;
+    margin-bottom: 50px;
+    
+}
+
+.loader__charge {
+    display        : flex;
+    width          : 100%;
+    justify-content: center;
+}
+
+/* Header resumen */
+.card__heading {
+    display       : flex;
+    align-items   : center;
+    gap           : 12px;
+    font-weight   : 700;
+    margin        : 0 0 12px 0;
+    letter-spacing: .2px;
+}
+
+.card__total {
+    display        : inline-flex;
+    align-items    : center;
+    justify-content: center;
+    min-width      : 34px;
+    height         : 34px;
+    padding        : 0 8px;
+    border-radius  : 10px;
+    background     : #f3f4f6;
+    border         : 1px solid #e5e7eb;
+    font-size      : 20px;
+}
+
+.pill {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 6px;
+    height       : 28px;
+    padding      : 0 10px;
+    border-radius: 999px;
+    font-size    : 13px;
+    font-weight  : 700;
+    border       : 1px solid rgba(0, 0, 0, .08);
+    background   : #f4f6fb;
+    box-shadow   : 0 1px 2px rgba(0, 0, 0, .04) inset;
+}
+
+.pill--tv {
+    background: #e9effc;
+    color     : #1f3b7b;
+}
+
+.pill--radio {
+    background: #e9f7ef;
+    color     : #145a32;
+}
+
+/* Grid */
+.card__grid {
+    display        : flex;
+    width          : 100%;
+    max-width      : 1140px;
+    flex-wrap      : wrap;
+    justify-content: center;
+    gap            : 20px;
+    margin-top     : 8px;
+}
+
+/* Tarjeta */
+.card__container {
+    --blue  : #375d9d;
+    --orange: #ec9702;
+
+    display        : flex;
+    flex-direction : column;
+    justify-content: space-between;
+    align-items    : stretch;
+
+    width    : 100%;
+    max-width: 250px;
+    height   : 320px;
+
+    background   : #fff;
+    border       : 1px solid rgba(0, 0, 0, .08);
+    border-radius: 12px;
+
+    box-shadow:
+        0 8px 18px rgba(55, 93, 157, .08),
+        0 2px 6px rgba(0, 0, 0, .05);
+
+    overflow  : hidden;
+    cursor    : pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.card__container:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 14px 24px rgba(55, 93, 157, .12),
+        0 4px 10px rgba(0, 0, 0, .08);
+    border-color: rgba(0, 0, 0, .12);
+}
+
+/* Cabecera (mantiene azul y tamaño) */
+.card__header {
+    background: linear-gradient(180deg, #3f69b2 0%, var(--blue) 100%);
+    color     : #fff;
+    padding   : 10px 12px 8px;
+}
+
+.card__title {
+    margin        : 0 0 6px 0;
+    text-align    : center;
+    font-size     : 15px;
+    font-weight   : 800;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    white-space   : nowrap;
+    overflow      : hidden;
+    text-overflow : ellipsis;
+}
+
+.card__number {
+    display        : flex;
+    justify-content: space-between;
+    gap            : 8px;
+}
+
+.badge {
+    background     : rgba(255, 255, 255, .18);
+    border         : 1px solid rgba(255, 255, 255, .35);
+    color          : #fff;
+    border-radius  : 8px;
+    padding        : 4px 8px;
+    font-size      : 12px;
+    font-weight    : 700;
+    line-height    : 1;
+    backdrop-filter: blur(2px);
+}
+
+/* Imagen */
+.card__image-wrapper {
+    flex       : 1 1 auto;
+    min-height : 120px;
+    display    : grid;
+    place-items: center;
+    background :
+        radial-gradient(40% 50% at 50% 10%, rgba(55, 93, 157, .06) 0%, rgba(55, 93, 157, 0) 100%),
+        #fafbfb;
+    position: relative;
+}
+
+.card__logo {
+    width     : 110px;
+    max-height: 90px;
+    object-fit: contain;
+    filter    : drop-shadow(0 1px 1px rgba(0, 0, 0, .05));
+}
+
+.card__logo--placeholder {
+    width          : 110px;
+    height         : 90px;
+    display        : grid;
+    place-items    : center;
+    border-radius  : 12px;
+    background     : linear-gradient(135deg, rgba(55, 93, 157, .12), rgba(55, 93, 157, .04));
+    color          : #375d9d;
+    font-size      : 34px;
+    font-weight    : 800;
+    letter-spacing : .5px;
+    text-transform : uppercase;
+    box-shadow     : inset 0 0 0 1px rgba(55, 93, 157, .1);
+}
+
+/* Spinner de carga de imagen */
+.card__spinner {
+    width           : 28px;
+    height          : 28px;
+    border-radius   : 50%;
+    border          : 3px solid rgba(0, 0, 0, .08);
+    border-top-color: var(--blue);
+    animation       : spin 1s linear infinite;
+}
+
+/* Pie (mantiene naranja y tamaño) */
+.card__footer {
+    background: linear-gradient(180deg, #f1a42a 0%, var(--orange) 100%);
+    color     : #fff;
+    padding   : 12px 10px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, .35);
+}
+
+.card__footer .tech {
+    font-weight   : 800;
+    letter-spacing: .2px;
+}
+
+.card__footer .sev {
+    font-size: 13px;
+    opacity  : .95;
+}
+
+/* Mensaje de error */
+.error__data {
+    color     : #b91c1c;
+    font-size : 18px;
+    text-align: center;
+    margin-top: 40px;
+}
+
+/* Paginación */
+.pagination {
+    display        : flex;
+    justify-content: center;
+    margin         : 22px 0 10px;
+    gap            : 10px;
+    flex-wrap      : wrap;
+}
+
+.pagination button {
+    background   : #e5e7eb;
+    border       : 1px solid #e5e7eb;
+    padding      : 8px 14px;
+    cursor       : pointer;
+    border-radius: 10px;
+    font-weight  : 700;
+    transition   : background-color .15s ease, transform .05s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #d1d5db;
+}
+
+.pagination button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.pagination button.active {
+    background-color: #375d9d;
+    border-color    : #375d9d;
+    color           : #fff;
+    box-shadow      : 0 0 0 2px rgba(55, 93, 157, .15);
+}
+
+.pagination button:disabled {
+    background-color: #f3f4f6;
+    color           : #9ca3af;
+    cursor          : not-allowed;
+}
+/* Utilidades */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

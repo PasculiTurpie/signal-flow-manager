@@ -1,0 +1,20 @@
+/* Loader circular */
+.spinner {
+  display: inline-block;
+  border-radius: 9999px;
+  border-style: solid;
+  border-color: #cbd5e1;     /* slate-300 */
+  border-top-color: #0969da; /* azul del botón primario */
+  animation: spin 0.8s linear infinite;
+  vertical-align: -2px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Contenedor de loader centrado en vacíos */
+.loader-center {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #4b5563; /* text-gray-600 */
+}

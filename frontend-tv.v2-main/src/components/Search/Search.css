@@ -1,0 +1,11 @@
+.input__text-search{
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  height:35px;
+  padding: 0 10px;
+  outline: none;
+}
+.input__text-search:focus{
+  outline: 3px solid rgb(28, 64, 143)
+}
