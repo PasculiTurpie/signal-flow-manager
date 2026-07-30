@@ -6,6 +6,7 @@ const {
   profile,
 } = require("../controllers/auth.controller.js");
 const { authRequired } = require("../middleware/authRequired.js");
+const { loginRateLimiter } = require("../middleware/loginRateLimiter.js");
 const {
   loginValidation,
   refreshValidation,
@@ -13,7 +14,7 @@ const {
 
 const router = express.Router();
 
-router.post("/login", loginValidation, login);
+router.post("/login", loginRateLimiter, loginValidation, login);
 router.post("/refresh", refreshValidation, refresh);
 router.get("/me", authRequired, profile);
 router.post("/logout", logout);

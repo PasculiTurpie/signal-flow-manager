@@ -6,10 +6,10 @@ const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Allowlist para endpoints públicos (ej. login/refresh)
 const ALLOWLIST = [
-  { method: "POST", regex: /^\/api\/v2\/auth\/login\/?$/i },
-  { method: "POST", regex: /^\/api\/v2\/auth\/refresh\/?$/i },
+  { method: "POST", regex: /^\/api\/v1\/auth\/login\/?$/i },
+  { method: "POST", regex: /^\/api\/v1\/auth\/refresh\/?$/i },
   // Puedes decidir si logout es público o protegido. Si quieres público, descomenta:
-  // { method: "POST", regex: /^\/api\/v2\/auth\/logout\/?$/i },
+  // { method: "POST", regex: /^\/api\/v1\/auth\/logout\/?$/i },
 ];
 
 function isAllowed(req) {

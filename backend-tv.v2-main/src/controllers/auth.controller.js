@@ -9,6 +9,7 @@ const {
   setAuthCookies,
   clearAuthCookies,
 } = require("../../utils/jwt");
+const { resetLoginAttempts } = require("../middleware/loginRateLimiter");
 
 const isProd = process.env.NODE_ENV === "production";
 const INVALID_CREDENTIALS = {
@@ -45,6 +46,8 @@ module.exports.login = async (req, res) => {
     if (!matched) {
       return res.status(401).json(INVALID_CREDENTIALS);
     }
+
+    resetLoginAttempts(req);
 
     const userId = String(user._id);
 

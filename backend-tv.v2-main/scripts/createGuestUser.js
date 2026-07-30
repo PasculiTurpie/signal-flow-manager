@@ -25,56 +25,52 @@
  * middleware de autorización por rol (puedo ayudarte con eso si quieres).
  */
 
-require("dotenv").config();
-const crypto = require("crypto");
-const { connectMongoose, mongoose } = require("../src/config/config.mongoose");
-const User = require("../src/models/users.model");
+require('dotenv').config()
+const crypto = require('crypto')
+const { connectMongoose, mongoose } = require('../src/config/config.mongoose')
+const User = require('../src/models/users.model')
 
 const GUEST_EMAIL = (
-  process.env.GUEST_EMAIL || "invitado@signaltv.local"
-).toLowerCase();
-const GUEST_USERNAME = process.env.GUEST_USERNAME || "Invitado";
-const GUEST_ROLE = process.env.GUEST_ROLE || "guest";
+  process.env.GUEST_EMAIL || 'invitado@signaltv.local'
+).toLowerCase()
+const GUEST_USERNAME = process.env.GUEST_USERNAME || 'Invitado'
+const GUEST_ROLE = process.env.GUEST_ROLE || 'guest'
 const GUEST_PASSWORD =
-  process.env.GUEST_PASSWORD || crypto.randomBytes(9).toString("base64url");
+  process.env.GUEST_PASSWORD || crypto.randomBytes(9).toString('base64url')
 
-async function main() {
-  await connectMongoose();
+async function main () {
+  await connectMongoose()
 
-  const existing = await User.findOne({ email: GUEST_EMAIL });
+  const existing = await User.findOne({ email: GUEST_EMAIL })
 
   if (existing) {
-    existing.username = GUEST_USERNAME;
-    existing.role = GUEST_ROLE;
-    existing.password = GUEST_PASSWORD; // el pre("save") del modelo la vuelve a hashear
-    await existing.save();
-    console.log("✅ Usuario invitado actualizado:");
+    existing.username = GUEST_USERNAME
+    existing.role = GUEST_ROLE
+    existing.password = GUEST_PASSWORD // el pre('save') del modelo la vuelve a hashear
+    await existing.save()
+    console.log('✅ Usuario invitado actualizado:')
   } else {
     const guest = new User({
       username: GUEST_USERNAME,
       email: GUEST_EMAIL,
       password: GUEST_PASSWORD,
-      role: GUEST_ROLE,
-    });
-    await guest.save();
-    console.log("✅ Usuario invitado creado:");
+      role: GUEST_ROLE
+    })
+    await guest.save()
+    console.log('✅ Usuario invitado creado:')
   }
 
   console.log({
     email: GUEST_EMAIL,
     username: GUEST_USERNAME,
     role: GUEST_ROLE,
-    password: GUEST_PASSWORD,
-  });
-  console.log(
-    "\n⚠️  Guarda esta contraseña ahora; no vuelve a mostrarse (no se guarda en texto plano en la BD).",
-  );
-
-  await mongoose.disconnect();
-  process.exit(0);
+    password: GUEST_PASSWORD
+  })
+  await mongoose.disconnect()
+  process.exit(0)
 }
 
 main().catch((err) => {
-  console.error("❌ Error creando el usuario invitado:", err);
-  process.exit(1);
-});
+  console.error('❌ Error creando el usuario invitado:', err)
+  process.exit(1)
+})
