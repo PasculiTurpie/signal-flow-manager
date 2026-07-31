@@ -24,7 +24,9 @@
   "scripts": {
     "test": "node --test src/**/*.test.js",
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "seed:guest": "node scripts/createGuestUser.js",
+    "seed:data": "node scripts/seedTestData.js"
   },
   "author": "Jorge R. Sepúlveda Turpie",
   "license": "MIT",
