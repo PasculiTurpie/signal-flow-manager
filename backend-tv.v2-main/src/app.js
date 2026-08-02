@@ -32,6 +32,11 @@ const EquipoRoutes = require("./routes/equipo.routes");
 const TipoEquipoRoutes = require("./routes/tipoEquipo.routes");
 const AuditRoutes = require("./routes/audit.routes");
 const BulkIrdRoutes = require("./routes/bulkIrd.routes");
+const BulkTipoEquipoRoutes = require("./routes/bulkTipoEquipo.routes");
+const BulkEquipoRoutes = require("./routes/bulkEquipo.routes");
+const BulkSignalRoutes = require("./routes/bulkSignal.routes");
+const BulkChannelRoutes = require("./routes/bulkChannel.routes");
+const BulkChannelFisicoRoutes = require("./routes/bulkChannelFisico.routes");
 const TitanRoutes = require("./routes/titans.routes");
 const DiagramRoutes = require("./routes/diagram.routes");
 const FlowRoutes = require("./routes/flow.routes");
@@ -140,6 +145,11 @@ app.use(
   TipoEquipoRoutes,
   AuditRoutes,
   BulkIrdRoutes,
+  BulkTipoEquipoRoutes,
+  BulkEquipoRoutes,
+  BulkSignalRoutes,
+  BulkChannelRoutes,
+  BulkChannelFisicoRoutes,
   FlowRoutes
 );
 

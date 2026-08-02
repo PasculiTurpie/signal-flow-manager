@@ -224,6 +224,7 @@ const removeEquipoFromGroupedOptions = (grouped, valueToRemove) => {
 };
 
 const insertEquipoIntoGroupedOptions = (grouped, option) => {
+  if (!option || !option.value || !option.label) return grouped; // guard: nunca insertar opciones sin label (rompe react-select)
   const tipo = option?.meta?.tipo || "";
   const labelByTipo = {
     satelite: "Satélites",
@@ -315,6 +316,23 @@ const ChannelForm = () => {
   const [signalsLoading, setSignalsLoading] = useState(true);
   const [signalsError, setSignalsError] = useState(null);
   const [allEquipoOptions, setAllEquipoOptions] = useState([]);
+
+  // Busca la opción real (label/tipo) de un nodo en el catálogo completo.
+  // Necesario porque los nodos de un canal YA GUARDADO solo traen equipoId
+  // (no equipoNombre/equipoTipo) — usar esos campos directo deja "undefined"
+  // y hace caer a react-select al renderizar/filtrar esa opción.
+  const resolveEquipoOptionForNode = useCallback(
+    (node) => {
+      const equipoId = node?.data?.equipoId ?? node?.equipo ?? null;
+      if (!equipoId) return null;
+      for (const group of allEquipoOptions) {
+        const opt = group.options?.find((o) => String(o.value) === String(equipoId));
+        if (opt) return opt;
+      }
+      return null;
+    },
+    [allEquipoOptions]
+  );
   const [selectedValue, setSelectedValue] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [currentChannel, setCurrentChannel] = useState(null);
@@ -335,6 +353,14 @@ const ChannelForm = () => {
 
   // 🎨 Select de color
   const [edgeColorSel, setEdgeColorSel] = useState(EDGE_COLOR_OPTIONS[0]);
+
+  // ✏️ Id del enlace en edición (null = formulario en modo "agregar")
+  const [editingEdgeId, setEditingEdgeId] = useState(null);
+
+  // ✏️ Id del nodo en edición + equipo original (para poder devolverlo al
+  // dropdown si el usuario cambia de equipo o cancela)
+  const [editingNodeId, setEditingNodeId] = useState(null);
+  const [editingNodeOriginalEquipo, setEditingNodeOriginalEquipo] = useState(null);
 
   const [initialValues, setInitialValues] = useState(defaultFormikValues);
   const [formValues, setFormValues] = useState(defaultFormikValues);
@@ -805,13 +831,13 @@ const ChannelForm = () => {
       setEdgeSourceSel((prev) => (prev?.value === nodeId ? null : prev));
       setEdgeTargetSel((prev) => (prev?.value === nodeId ? null : prev));
 
-      const equipoId = node?.data?.equipoId;
-      const equipoNombre = node?.data?.equipoNombre || "";
-      const equipoTipo = node?.data?.equipoTipo || "";
+      const equipoId = node?.data?.equipoId ?? node?.equipo ?? null;
+      const foundEquipo = resolveEquipoOptionForNode(node);
+      const equipoNombre = foundEquipo?.label || node?.data?.equipoNombre || "";
+      const equipoTipo = foundEquipo?.meta?.tipo || node?.data?.equipoTipo || "";
 
-      if (equipoId) {
-        const option = { label: equipoNombre, value: equipoId, meta: { tipo: equipoTipo } };
-        setOptionSelectEquipo((prev) => insertEquipoIntoGroupedOptions(prev, option));
+      if (equipoId && foundEquipo) {
+        setOptionSelectEquipo((prev) => insertEquipoIntoGroupedOptions(prev, foundEquipo));
       }
 
       setSelectedEquipoValue((prev) => (String(prev) === String(equipoId) ? null : prev));
@@ -832,7 +858,7 @@ const ChannelForm = () => {
         showConfirmButton: false,
       });
     },
-    [draftNodes, draftEdges]
+    [draftNodes, draftEdges, resolveEquipoOptionForNode]
   );
 
   const handleRemoveEdge = useCallback(async (edgeId) => {
@@ -1185,7 +1211,13 @@ const ChannelForm = () => {
               <div className="chf__grid chf__grid--3 chf__grid--align-end">
                 <label className="chf__label">
                   Id Nodo
-                  <Field className="chf__input" placeholder="Id Nodo" name="id" />
+                  <Field
+                    className="chf__input"
+                    placeholder="Id Nodo"
+                    name="id"
+                    disabled={Boolean(editingNodeId)}
+                    title={editingNodeId ? "El Id no se puede cambiar durante la edición" : undefined}
+                  />
                 </label>
 
                 <label className="chf__label">
@@ -1238,16 +1270,24 @@ const ChannelForm = () => {
                       },
                     };
 
-                    if (draftNodes.some((n) => n.id === node.id)) {
-                      return Swal.fire({
-                        icon: "warning",
-                        title: "Nodo duplicado",
-                        text: `Ya existe un nodo con id "${node.id}".`,
-                      });
+                    if (editingNodeId) {
+                      // ✏️ Modo edición: reemplaza el nodo (mismo id)
+                      setDraftNodes((prev) => prev.map((n) => (n.id === editingNodeId ? node : n)));
+                      // El equipo finalmente elegido queda "en uso": se saca del dropdown.
+                      // (el equipo original ya se había devuelto al dropdown al entrar en edición)
+                      setOptionSelectEquipo((prev) => removeEquipoFromGroupedOptions(prev, selectedEquipoValue));
+                    } else {
+                      // ➕ Modo agregar: no permitir ids duplicados
+                      if (draftNodes.some((n) => n.id === node.id)) {
+                        return Swal.fire({
+                          icon: "warning",
+                          title: "Nodo duplicado",
+                          text: `Ya existe un nodo con id "${node.id}".`,
+                        });
+                      }
+                      setDraftNodes((prev) => [...prev, node]);
+                      setOptionSelectEquipo((prev) => removeEquipoFromGroupedOptions(prev, selectedEquipoValue));
                     }
-
-                    setDraftNodes((prev) => [...prev, node]);
-                    setOptionSelectEquipo((prev) => removeEquipoFromGroupedOptions(prev, selectedEquipoValue));
 
                     setSelectedEquipoValue(null);
                     setSelectedIdEquipo(null);
@@ -1257,24 +1297,97 @@ const ChannelForm = () => {
                     setFieldValue("label", "");
                     setFieldValue("posX", "");
                     setFieldValue("posY", "");
+
+                    setEditingNodeId(null);
+                    setEditingNodeOriginalEquipo(null);
                   }}
                 >
-                  + Agregar nodo
+                  {editingNodeId ? "💾 Guardar cambios" : "+ Agregar nodo"}
                 </button>
+
+                {editingNodeId && (
+                  <button
+                    className="chf__btn"
+                    type="button"
+                    onClick={() => {
+                      // Cancelar: el equipo original ya se había devuelto al dropdown
+                      // al entrar en edición, así que solo se saca de vuelta (sigue en uso
+                      // por el nodo que no se llegó a modificar).
+                      if (editingNodeOriginalEquipo) {
+                        setOptionSelectEquipo((prev) =>
+                          removeEquipoFromGroupedOptions(prev, editingNodeOriginalEquipo.value)
+                        );
+                      }
+                      setSelectedEquipoValue(null);
+                      setSelectedIdEquipo(null);
+                      setSelectedEquipoTipo(null);
+
+                      setFieldValue("id", "");
+                      setFieldValue("label", "");
+                      setFieldValue("posX", "");
+                      setFieldValue("posY", "");
+
+                      setEditingNodeId(null);
+                      setEditingNodeOriginalEquipo(null);
+                    }}
+                  >
+                    Cancelar edición
+                  </button>
+                )}
               </div>
 
               {draftNodes.length > 0 && (
                 <ul className="chf__list">
-                  {draftNodes.map((n) => (
+                  {draftNodes.map((n) => {
+                    const eq = resolveEquipoOptionForNode(n);
+                    const equipoLabel = eq?.label || n.data?.equipoNombre || "(equipo no encontrado)";
+                    const equipoTipoLabel = eq?.meta?.tipo || n.data?.equipoTipo || "-";
+                    return (
                     <li
                       key={n.id}
                       className="chf__list-item"
                       style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
                     >
                       <div style={{ flex: "1 1 auto" }}>
-                        <code>{n.id}</code> — {n.data?.label} — {n.data?.equipoNombre}{" "}
-                        <span className="chf__badge">{n.data?.equipoTipo || "-"}</span>
+                        <code>{n.id}</code> — {n.data?.label} — {equipoLabel}{" "}
+                        <span className="chf__badge">{equipoTipoLabel}</span>
                       </div>
+                      <button
+                        type="button"
+                        className="chf__btn chf__btn--secondary"
+                        onClick={() => {
+                          const found = resolveEquipoOptionForNode(n);
+
+                          if ((n.data?.equipoId ?? n.equipo) && !found) {
+                            Swal.fire({
+                              icon: "warning",
+                              title: "Equipo no encontrado en el catálogo",
+                              text: "Puede haber sido eliminado. Elige un equipo nuevo para este nodo.",
+                            });
+                          }
+
+                          setFieldValue("id", n.id);
+                          setFieldValue("label", n.data?.label || "");
+                          setFieldValue("posX", String(n.position?.x ?? ""));
+                          setFieldValue("posY", String(n.position?.y ?? ""));
+
+                          // Devuelve temporalmente el equipo actual al dropdown para
+                          // poder mantenerlo seleccionado o cambiarlo por otro.
+                          if (found) {
+                            setOptionSelectEquipo((prev) => insertEquipoIntoGroupedOptions(prev, found));
+                          }
+
+                          setSelectedEquipoValue(found?.value || null);
+                          setSelectedIdEquipo(found?.label || null);
+                          setSelectedEquipoTipo(found?.meta?.tipo || null);
+
+                          setEditingNodeOriginalEquipo(found);
+                          setEditingNodeId(n.id);
+                        }}
+                        title="Editar nodo"
+                      >
+                        ✏️ Editar
+                      </button>
                       <button
                         type="button"
                         className="chf__btn chf__btn--danger"
@@ -1284,7 +1397,8 @@ const ChannelForm = () => {
                         🗑 Eliminar
                       </button>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </fieldset>
@@ -1296,7 +1410,13 @@ const ChannelForm = () => {
               <div className="chf__grid chf__grid--4 chf__grid--align-end chf__row-gap">
                 <label className="chf__label">
                   Id Enlace
-                  <Field className="chf__input" placeholder="Id Enlace" name="edgeId" />
+                  <Field
+                    className="chf__input"
+                    placeholder="Id Enlace"
+                    name="edgeId"
+                    disabled={Boolean(editingEdgeId)}
+                    title={editingEdgeId ? "El Id no se puede cambiar durante la edición" : undefined}
+                  />
                 </label>
 
                 <label className="chf__label">
@@ -1414,7 +1534,7 @@ const ChannelForm = () => {
                 </label>
               </div>
 
-              <div className="chf__container">
+              <div className="chf__container" style={{ display: "flex", gap: 8 }}>
                 <button
                   className="chf__btn chf__btn--secondary btn--enlace"
                   type="button"
@@ -1489,15 +1609,20 @@ const ChannelForm = () => {
                       },
                     };
 
-                    if (draftEdges.some((e) => e.id === edge.id)) {
-                      return Swal.fire({
-                        icon: "warning",
-                        title: "Enlace duplicado",
-                        text: `Ya existe un enlace con id "${edge.id}".`,
-                      });
+                    if (editingEdgeId) {
+                      // ✏️ Modo edición: reemplaza el enlace existente (mismo id, ya no editable)
+                      setDraftEdges((prev) => prev.map((e) => (e.id === editingEdgeId ? edge : e)));
+                    } else {
+                      // ➕ Modo agregar: no permitir ids duplicados
+                      if (draftEdges.some((e) => e.id === edge.id)) {
+                        return Swal.fire({
+                          icon: "warning",
+                          title: "Enlace duplicado",
+                          text: `Ya existe un enlace con id "${edge.id}".`,
+                        });
+                      }
+                      setDraftEdges((prev) => [...prev, edge]);
                     }
-
-                    setDraftEdges((prev) => [...prev, edge]);
 
                     setFieldValue("edgeId", "");
                     setFieldValue("source", "");
@@ -1510,10 +1635,34 @@ const ChannelForm = () => {
                     setEdgeTargetSel(null);
                     setEdgeDirection(EDGE_DIR_OPTIONS[0]);
                     setEdgeColorSel(EDGE_COLOR_OPTIONS[0]);
+                    setEditingEdgeId(null);
                   }}
                 >
-                  + Agregar enlace
+                  {editingEdgeId ? "💾 Guardar cambios" : "+ Agregar enlace"}
                 </button>
+
+                {editingEdgeId && (
+                  <button
+                    className="chf__btn"
+                    type="button"
+                    onClick={() => {
+                      setFieldValue("edgeId", "");
+                      setFieldValue("source", "");
+                      setFieldValue("target", "");
+                      setFieldValue("edgeLabel", "");
+                      setFieldValue("edgeLabelStart", "");
+                      setFieldValue("edgeLabelEnd", "");
+
+                      setEdgeSourceSel(null);
+                      setEdgeTargetSel(null);
+                      setEdgeDirection(EDGE_DIR_OPTIONS[0]);
+                      setEdgeColorSel(EDGE_COLOR_OPTIONS[0]);
+                      setEditingEdgeId(null);
+                    }}
+                  >
+                    Cancelar edición
+                  </button>
+                )}
               </div>
 
               {draftEdges.length > 0 && (
@@ -1555,6 +1704,39 @@ const ChannelForm = () => {
                             {dir === "bi" ? "bidireccional" : dir}
                           </span>
                         </div>
+
+                        <button
+                          type="button"
+                          className="chf__btn chf__btn--secondary"
+                          onClick={() => {
+                            setFieldValue("edgeId", e.id);
+                            setFieldValue("source", e.source);
+                            setFieldValue("target", e.target);
+                            setFieldValue("edgeLabel", label);
+                            setFieldValue("edgeLabelStart", labelStart);
+                            setFieldValue("edgeLabelEnd", labelEnd);
+
+                            const srcOpt =
+                              edgeNodeOptions.find((o) => String(o.value) === String(e.source)) || null;
+                            const tgtOpt =
+                              edgeNodeOptions.find((o) => String(o.value) === String(e.target)) || null;
+                            setEdgeSourceSel(srcOpt);
+                            setEdgeTargetSel(tgtOpt);
+
+                            const dirOpt =
+                              EDGE_DIR_OPTIONS.find((o) => o.value === dir) || EDGE_DIR_OPTIONS[0];
+                            setEdgeDirection(dirOpt);
+
+                            const colorOpt =
+                              EDGE_COLOR_OPTIONS.find((o) => o.value === edgeColor) || EDGE_COLOR_OPTIONS[0];
+                            setEdgeColorSel(colorOpt);
+
+                            setEditingEdgeId(e.id);
+                          }}
+                          title="Editar enlace"
+                        >
+                          ✏️ Editar
+                        </button>
 
                         <button
                           type="button"

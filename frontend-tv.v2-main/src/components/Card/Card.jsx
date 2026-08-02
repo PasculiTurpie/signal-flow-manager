@@ -172,7 +172,7 @@ const Card = () => {
 
                                     <div className="card__footer">
                                         <div className="tech">
-                                            {item.tipoTecnologia}
+                                            {item.tipoTecnologia.toUpperCase()}
                                         </div>
                                         <div className="sev">
                                             Severidad:{" "}

@@ -238,11 +238,63 @@ class Api {
             .then((r) => r.data);
     }
 
+    validateExcelTipoEquipos(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post("/tipoequipos/validate-excel", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
+    bulkCreateTipoEquipos(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post("/tipoequipos/bulk-create", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
+    validateExcelEquipos(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post("/equipos/validate-excel", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
+    bulkCreateEquipos(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post("/equipos/bulk-create", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
     bulkCreateIrds(file) {
         const formData = new FormData();
         formData.append("file", file);
         return this._axios
             .post("/irds/bulk-create", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
+    // commit=false -> modo previsualización (dry-run, no escribe nada)
+    // commit=true  -> escribe los Channel de verdad
+    bulkCreateChannelsFisico(file, commit = false) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post(`/channels/bulk-create-fisico${commit ? "?commit=true" : ""}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             })
             .then((r) => r.data);

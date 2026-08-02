@@ -45,6 +45,9 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 // 🔔 Hook de aviso + auto-refresh con cookies (sin localStorage)
 import useSessionRefresher from "./hooks/useSessionRefresher";
 import BulkIrdUploader from "./components/BulkIrdUploader/BulkIrdUploader";
+import BulkChannelFisicoUploader from "./components/BulkChannelFisicoUploader/BulkChannelFisicoUploader";
+import BulkTipoEquipoUploader from "./components/BulkTipoEquipoUploader/BulkTipoEquipoUploader";
+import BulkEquipoUploader from "./components/BulkEquipoUploader/BulkEquipoUploader";
 
 import ServicesMultiHost from "./components/ServicesMultiHost/ServicesMultiHost";
 import TipoEquipoForm from "./pages/Tipo-Equipo/TipoEquipoForm";
@@ -103,6 +106,9 @@ const App = () => {
 
                         <Route path="/audit-logs" element={<AuditLogPage />} />
                         <Route path="/massive-loading" element={<BulkIrdUploader />} />
+                        <Route path="/massive-loading-channels" element={<BulkChannelFisicoUploader />} />
+                        <Route path="/massive-loading-tipoequipos" element={<BulkTipoEquipoUploader />} />
+                        <Route path="/massive-loading-equipos" element={<BulkEquipoUploader />} />
                         <Route path="/flows/workspace" element={<FlowBuilder />} />
                     </Route>
                     <Route path="/channels/:id" element={<DiagramFlow />} />
