@@ -6,7 +6,7 @@ import React, {
     useCallback,
 } from "react";
 import "./Card.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../utils/api";
 import Loader from "../../components/Loader/Loader";
 
@@ -23,7 +23,8 @@ const Card = () => {
     const [signalTv, setSignalTv] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = Math.max(1, toNum(searchParams.get("page")) || 1);
 
     // Obtener señales desde la API
     const fetchSignals = useCallback(async (abortSignal) => {
@@ -77,10 +78,25 @@ const Card = () => {
         return signalTv.slice(first, last);
     }, [signalTv, currentPage]);
 
-    const paginate = (n) =>
-        setCurrentPage(Math.min(Math.max(n, 1), totalPages));
-    const nextPage = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
-    const prevPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
+    useEffect(() => {
+        if (!isLoading && currentPage > totalPages) {
+            setPage(totalPages);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoading, totalPages]);
+
+    const setPage = (n) => {
+        const clamped = Math.min(Math.max(n, 1), totalPages);
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (clamped <= 1) next.delete("page");
+            else next.set("page", String(clamped));
+            return next;
+        });
+    };
+    const paginate = (n) => setPage(n);
+    const nextPage = () => setPage(currentPage + 1);
+    const prevPage = () => setPage(currentPage - 1);
 
     const { tipoTv, tipoRadio } = useMemo(() => {
         let tv = 0,
@@ -172,7 +188,7 @@ const Card = () => {
 
                                     <div className="card__footer">
                                         <div className="tech">
-                                            {item.tipoTecnologia.toUpperCase()}
+                                            {item.tipoTecnologia}
                                         </div>
                                         <div className="sev">
                                             Severidad:{" "}

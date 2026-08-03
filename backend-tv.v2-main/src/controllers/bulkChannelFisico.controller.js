@@ -18,6 +18,7 @@ const XLSX = require("xlsx");
 const Channel = require("../models/channel.model");
 const Signal = require("../models/signal.model");
 const Equipo = require("../models/equipo.model");
+const Ird = require("../models/ird.model");
 const TipoEquipo = require("../models/tipoEquipo");
 
 const norm = (s) => String(s ?? "").trim();
@@ -61,20 +62,76 @@ async function resolveEquipo(nombre, tipoNombre, { strict }) {
   return Equipo.create({ nombre: clean, marca: "Por definir", modelo: "Por definir", tipoNombre: tipoId });
 }
 
-/* ------------------------------- Auto-layout ------------------------------ */
+// Resuelve (y AUTOREPARA) el Equipo del IRD real, vinculándolo a la colección Ird.
+//  1) Busca el Ird real por nombreIrd.
+//  2) Si existe: busca/crea el Equipo y le asegura el irdRef correcto (lo corrige
+//     si existía pero estaba mal vinculado — soluciona el error del panel "sin irdRef").
+//  3) Si no existe ningún Ird con ese nombre (ej. la base de pruebas aún no tiene
+//     los IRD reales cargados): cae al equipo sintético "IRD {señal}" sin irdRef.
+async function resolveIrdEquipo(irdRealName, nombreSenal) {
+  const clean = norm(irdRealName);
+  if (clean) {
+    const ird = await Ird.findOne({ nombreIrd: new RegExp(`^${clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") });
+    if (ird) {
+      const tipoId = await getTipoId("ird");
+      let eq = await Equipo.findOne({ nombre: new RegExp(`^${clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") });
+      if (!eq) {
+        eq = await Equipo.create({
+          nombre: ird.nombreIrd,
+          marca: ird.marcaIrd || "Por definir",
+          modelo: ird.modelIrd || "Por definir",
+          ip_gestion: ird.ipAdminIrd || null,
+          tipoNombre: tipoId,
+          irdRef: ird._id,
+        });
+      } else if (String(eq.irdRef || "") !== String(ird._id)) {
+        eq.irdRef = ird._id; // autorepara el vínculo si faltaba o estaba mal
+        await eq.save();
+      }
+      return { equipo: eq, sintetico: false };
+    }
+  }
+  const equipo = await resolveEquipo(`IRD ${nombreSenal}`, "ird", { strict: false });
+  return { equipo, sintetico: true };
+}
+
+/* ------------------------------- Auto-layout ------------------------------
+ * Piramidal, de arriba hacia abajo:
+ *   Fila -2:              MPLS (centrado)
+ *   Fila -1:              ASR (centrado)
+ *   Fila  0:  [SW entrada] [SW dist. 1] [SW dist. 2] ... (todos los switches, en línea)
+ *   Fila  1:  [satélite] [IRD]  bajo el SW de entrada (misma horizontal, separados)
+ *             [equipo(s)] bajo cada SW de distribución que les corresponda
+ * -------------------------------------------------------------------------*/
 function layoutHierarchical(centerId, switchGroups, entryId, satId, irdId, mplsId) {
   const positions = new Map();
-  const X_STEP = 300, Y_ROW = 220;
-  positions.set(centerId, { x: 0, y: 0 });
-  positions.set(mplsId, { x: 0, y: -Y_ROW * 1.8 });
-  positions.set(entryId, { x: -X_STEP, y: 0 });
-  positions.set(irdId, { x: -X_STEP, y: Y_ROW });
-  positions.set(satId, { x: -X_STEP * 1.8, y: Y_ROW * 0.5 });
-  switchGroups.forEach(({ switchId, deviceIds }, i) => {
-    const x = X_STEP * (i + 1);
-    positions.set(switchId, { x, y: 0 });
-    deviceIds.forEach((deviceId, j) => positions.set(deviceId, { x, y: Y_ROW * (1 + j * 0.8) }));
+  const X_STEP = 300, Y_ROW = 220, DEVICE_SPACING = 190, SAT_IRD_SPACING = 140;
+
+  positions.set(mplsId, { x: 0, y: -Y_ROW * 2 });
+  positions.set(centerId, { x: 0, y: -Y_ROW }); // ASR
+
+  // Fila de switches: entrada primero, luego los de distribución, todos alineados y centrados
+  const allSwitchIds = [entryId, ...switchGroups.map((g) => g.switchId)];
+  const offsetX = ((allSwitchIds.length - 1) * X_STEP) / 2;
+  allSwitchIds.forEach((swId, i) => {
+    positions.set(swId, { x: i * X_STEP - offsetX, y: 0 });
   });
+
+  // Satélite + IRD: misma horizontal, separados, centrados bajo el switch de entrada
+  const entryX = positions.get(entryId).x;
+  positions.set(satId, { x: entryX - SAT_IRD_SPACING, y: Y_ROW });
+  positions.set(irdId, { x: entryX + SAT_IRD_SPACING, y: Y_ROW });
+
+  // Equipos: bajo su switch de distribución correspondiente, en la misma fila inferior
+  switchGroups.forEach(({ switchId, deviceIds }) => {
+    const swX = positions.get(switchId).x;
+    const n = deviceIds.length;
+    deviceIds.forEach((deviceId, j) => {
+      const dx = (j - (n - 1) / 2) * DEVICE_SPACING;
+      positions.set(deviceId, { x: swX + dx, y: Y_ROW });
+    });
+  });
+
   return positions;
 }
 
@@ -110,10 +167,15 @@ function readSheet(wb, name) {
 }
 
 function groupBySeñal(rows) {
+  // 1 grupo = 1 variante región/categoría = 1 diagrama independiente
+  // (antes se agrupaba solo por nombre_señal, combinando variantes en 1 diagrama;
+  // se cambió a pedido explícito: 3 diagramas separados para HD/COBRE/FCA/etc.)
   const groups = new Map();
   for (const row of rows) {
-    const key = norm(row["nombre_señal"]);
-    if (!key) continue;
+    const señal = norm(row["nombre_señal"]);
+    const region = norm(row.region);
+    if (!señal || !region) continue;
+    const key = `${señal}|||${region}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   }
@@ -149,6 +211,8 @@ async function buildChannelForGroup(nombreSenal, rows) {
   }
 
   const first = rows[0];
+  const region0 = norm(first.region);
+  const nameChannel = `${nombreSenal} ${region0}`.trim();
   const satelite = norm(first.satelite);
   const polarizacion = norm(first.polarizacion);
   const switchEntrada = norm(first.switch_entrada);
@@ -156,7 +220,10 @@ async function buildChannelForGroup(nombreSenal, rows) {
   const nodoMpls = norm(first.nodo_mpls);
 
   const satEquipoDoc = await resolveEquipo(`${satelite} ${polarizacion}`.trim(), "satelite", { strict: false });
-  const irdEquipoDoc = await resolveEquipo(`IRD ${nombreSenal}`, "ird", { strict: false });
+
+  const irdRealName = norm(first.ird_real);
+  const { equipo: irdEquipoDoc, sintetico: irdEsSintetico } = await resolveIrdEquipo(irdRealName, nombreSenal);
+
   const swEntradaDoc = await resolveEquipo(switchEntrada, "switch", { strict: false });
   const asrEquipoDoc = await resolveEquipo(routerAsr, "router", { strict: false });
   const mplsEquipoDoc = await resolveEquipo(nodoMpls, "mpls", { strict: false });
@@ -320,10 +387,11 @@ async function buildChannelForGroup(nombreSenal, rows) {
 
   return {
     signal: branchesSummary[0].signalId,
-    nameChannel: nombreSenal,
+    nameChannel,
     nodes,
     edges,
     branchesSummary,
+    irdEsSintetico,
   };
 }
 
@@ -340,8 +408,10 @@ async function processWorkbook(workbook, { commit }) {
   tipoCache = null;
   const groups = groupBySeñal(rows);
 
-  for (const [nombreSenal, groupRows] of groups) {
+  for (const [, groupRows] of groups) {
     results.summary.totalGrupos++;
+    const nombreSenal = norm(groupRows[0]["nombre_señal"]);
+    const etiqueta = `${nombreSenal} (${norm(groupRows[0].region)})`;
     try {
       const payload = await buildChannelForGroup(nombreSenal, groupRows);
 
@@ -351,20 +421,22 @@ async function processWorkbook(workbook, { commit }) {
         else doc.set(payload);
         await doc.save();
         results.successful.push({
-          nombre_señal: nombreSenal, channelId: doc._id,
+          nombre_señal: etiqueta, channelId: doc._id,
           ramas: payload.branchesSummary.length, nodos: payload.nodes.length, enlaces: payload.edges.length,
+          irdSintetico: payload.irdEsSintetico,
         });
       } else {
         results.successful.push({
-          nombre_señal: nombreSenal,
+          nombre_señal: etiqueta,
           ramas: payload.branchesSummary.map((b) => `${b.region} (${b.color})`),
           nodos: payload.nodes.length, enlaces: payload.edges.length, preview: true,
+          irdSintetico: payload.irdEsSintetico,
         });
       }
       results.summary.ok++;
     } catch (error) {
       results.summary.errors++;
-      results.errors.push({ nombre_señal: nombreSenal, error: error.message });
+      results.errors.push({ nombre_señal: etiqueta, error: error.message });
     }
   }
   return results;
