@@ -24,10 +24,12 @@ const Card = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [diagramSignalIds, setDiagramSignalIds] = useState(new Set());
+    const [totalDiagrams, setTotalDiagrams] = useState(0);
     const [searchParams, setSearchParams] = useSearchParams();
     const currentPage = Math.max(1, toNum(searchParams.get("page")) || 1);
 
-    // Qué señales ya tienen un diagrama (Channel) creado, para el punto verde/rojo
+    // Qué señales ya tienen un diagrama (Channel) creado, para el punto verde/rojo,
+    // y el total de diagramas para el contador del encabezado.
     const fetchDiagramSignalIds = useCallback(async () => {
         try {
             const res = await api.listChannelDiagrams();
@@ -39,6 +41,7 @@ const Card = () => {
                     .map(String)
             );
             setDiagramSignalIds(ids);
+            setTotalDiagrams(list.length);
         } catch (err) {
             // No bloquea el render de las tarjetas si esto falla; solo no se pinta el punto.
             console.error("Error al obtener los diagramas existentes:", err);
@@ -149,6 +152,9 @@ const Card = () => {
                         <span className="pill pill--radio">
                             Radios: {tipoRadio}
                         </span>
+                        <span className="pill pill--diagram">
+                            Diagramas: {totalDiagrams}
+                        </span>
                     </h3>
 
                     <div className="card__grid">
@@ -225,7 +231,7 @@ const Card = () => {
                                             }
                                         />
                                         <div className="tech">
-                                            {item.tipoTecnologia.toUpperCase()}
+                                            {item.tipoTecnologia}
                                         </div>
                                         <div className="sev">
                                             Severidad:{" "}

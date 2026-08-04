@@ -63,6 +63,11 @@
     color     : #145a32;
 }
 
+.pill--diagram {
+    background: #fdece9;
+    color     : #9a3412;
+}
+
 /* Grid */
 .card__grid {
     display        : flex;
