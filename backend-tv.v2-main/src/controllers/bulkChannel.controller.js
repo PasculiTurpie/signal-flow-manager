@@ -117,7 +117,8 @@ async function processChannelWorkbook(workbook) {
   const results = {
     successful: [],
     errors: [],
-    summary: { totalProcessed: 0, channelsCreated: 0, errors: 0 },
+    duplicadosEnArchivo: [],
+    summary: { totalProcessed: 0, channelsCreated: 0, errors: 0, duplicadosEnArchivo: 0 },
   };
 
   const channelRows = readSheet(workbook, "Channels");
@@ -130,6 +131,7 @@ async function processChannelWorkbook(workbook) {
 
   const nodesByChannel = groupBy(nodeRows, "nameChannel");
   const edgesByChannel = groupBy(edgeRows, "nameChannel");
+  const vistosEnArchivo = new Map();
 
   for (let i = 0; i < channelRows.length; i++) {
     const row = channelRows[i];
@@ -144,6 +146,13 @@ async function processChannelWorkbook(workbook) {
         }
       }
       const nameChannel = normalizeStr(row.nameChannel);
+
+      const keyDup = nameChannel.toLowerCase();
+      if (vistosEnArchivo.has(keyDup)) {
+        vistosEnArchivo.get(keyDup).push(rowNumber);
+      } else {
+        vistosEnArchivo.set(keyDup, [rowNumber]);
+      }
 
       // 1) Resolver Signal
       const signalFilter = { nameChannel: normalizeStr(row.signalNameChannel) };
@@ -292,6 +301,13 @@ async function processChannelWorkbook(workbook) {
     } catch (error) {
       results.summary.errors++;
       results.errors.push({ row: rowNumber, data: row, error: error.message });
+    }
+  }
+
+  for (const [key, rows] of vistosEnArchivo) {
+    if (rows.length > 1) {
+      results.duplicadosEnArchivo.push({ nameChannel: key, filas: rows });
+      results.summary.duplicadosEnArchivo++;
     }
   }
 

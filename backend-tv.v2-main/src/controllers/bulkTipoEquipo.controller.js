@@ -8,8 +8,11 @@ async function processTipoEquipoData(excelData) {
   const results = {
     successful: [],
     errors: [],
-    summary: { totalProcessed: 0, created: 0, updated: 0, errors: 0 },
+    duplicadosEnArchivo: [],
+    summary: { totalProcessed: 0, created: 0, updated: 0, errors: 0, duplicadosEnArchivo: 0 },
   };
+
+  const vistosEnArchivo = new Map(); // key -> [rowNumber, ...]
 
   for (let i = 0; i < excelData.length; i++) {
     const row = excelData[i];
@@ -26,6 +29,12 @@ async function processTipoEquipoData(excelData) {
       const tipoNombre = String(row.tipoNombre).trim();
       const tipoNombreLower = tipoNombre.toLowerCase();
 
+      if (vistosEnArchivo.has(tipoNombreLower)) {
+        vistosEnArchivo.get(tipoNombreLower).push(rowNumber);
+      } else {
+        vistosEnArchivo.set(tipoNombreLower, [rowNumber]);
+      }
+
       const existing = await TipoEquipo.findOne({ tipoNombreLower });
       if (existing) {
         results.summary.updated++;
@@ -39,6 +48,13 @@ async function processTipoEquipoData(excelData) {
     } catch (error) {
       results.summary.errors++;
       results.errors.push({ row: rowNumber, data: row, error: error.message });
+    }
+  }
+
+  for (const [key, rows] of vistosEnArchivo) {
+    if (rows.length > 1) {
+      results.duplicadosEnArchivo.push({ tipoNombre: key, filas: rows });
+      results.summary.duplicadosEnArchivo++;
     }
   }
 

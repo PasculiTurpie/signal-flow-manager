@@ -48,6 +48,7 @@ import BulkIrdUploader from "./components/BulkIrdUploader/BulkIrdUploader";
 import BulkChannelFisicoUploader from "./components/BulkChannelFisicoUploader/BulkChannelFisicoUploader";
 import BulkTipoEquipoUploader from "./components/BulkTipoEquipoUploader/BulkTipoEquipoUploader";
 import BulkEquipoUploader from "./components/BulkEquipoUploader/BulkEquipoUploader";
+import BulkSignalUploader from "./components/BulkSignalUploader/BulkSignalUploader";
 
 import ServicesMultiHost from "./components/ServicesMultiHost/ServicesMultiHost";
 import TipoEquipoForm from "./pages/Tipo-Equipo/TipoEquipoForm";
@@ -109,6 +110,7 @@ const App = () => {
                         <Route path="/massive-loading-channels" element={<BulkChannelFisicoUploader />} />
                         <Route path="/massive-loading-tipoequipos" element={<BulkTipoEquipoUploader />} />
                         <Route path="/massive-loading-equipos" element={<BulkEquipoUploader />} />
+                        <Route path="/massive-loading-signals" element={<BulkSignalUploader />} />
                         <Route path="/flows/workspace" element={<FlowBuilder />} />
                     </Route>
                     <Route path="/channels/:id" element={<DiagramFlow />} />

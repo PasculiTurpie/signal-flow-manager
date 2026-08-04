@@ -37,8 +37,11 @@ async function processEquipoData(excelData) {
   const results = {
     successful: [],
     errors: [],
-    summary: { totalProcessed: 0, created: 0, updated: 0, errors: 0 },
+    duplicadosEnArchivo: [],
+    summary: { totalProcessed: 0, created: 0, updated: 0, errors: 0, duplicadosEnArchivo: 0 },
   };
+
+  const vistosEnArchivo = new Map();
 
   for (let i = 0; i < excelData.length; i++) {
     const row = excelData[i];
@@ -55,6 +58,14 @@ async function processEquipoData(excelData) {
       const nombre = norm(row.nombre);
       const marca = norm(row.marca);
       const modelo = norm(row.modelo);
+
+      const key = `${nombre.toLowerCase()}|||${modelo.toLowerCase()}`;
+      if (vistosEnArchivo.has(key)) {
+        vistosEnArchivo.get(key).push(rowNumber);
+      } else {
+        vistosEnArchivo.set(key, [rowNumber]);
+      }
+
       const tipo = await resolveTipoEquipo(row.tipoNombre);
       const satellite = await resolveSatelliteOptional(row.satelliteNombre);
       const ird = await resolveIrdOptional(row.irdNombre);
@@ -88,6 +99,14 @@ async function processEquipoData(excelData) {
       let message = error.message;
       if (error?.code === 11000) message = `Duplicado: ya existe un equipo con esos datos únicos.`;
       results.errors.push({ row: rowNumber, data: row, error: message });
+    }
+  }
+
+  for (const [key, rows] of vistosEnArchivo) {
+    if (rows.length > 1) {
+      const [nombre, modelo] = key.split("|||");
+      results.duplicadosEnArchivo.push({ nombre, modelo, filas: rows });
+      results.summary.duplicadosEnArchivo++;
     }
   }
 

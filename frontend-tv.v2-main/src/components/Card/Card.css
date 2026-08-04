@@ -192,6 +192,7 @@
 
 /* Pie (mantiene naranja y tamaño) */
 .card__footer {
+    position  : relative;
     background: linear-gradient(180deg, #f1a42a 0%, var(--orange) 100%);
     color     : #fff;
     padding   : 12px 10px;
@@ -207,6 +208,25 @@
 .card__footer .sev {
     font-size: 13px;
     opacity  : .95;
+}
+
+.diagram-dot {
+    position     : absolute;
+    right        : 10px;
+    bottom       : 13px;
+    display      : inline-block;
+    width        : 9px;
+    height       : 9px;
+    border-radius: 50%;
+    box-shadow   : 0 0 0 2px rgba(255, 255, 255, .5);
+}
+
+.diagram-dot--ok {
+    background: #22c55e;
+}
+
+.diagram-dot--missing {
+    background: #ef4444;
 }
 
 /* Mensaje de error */

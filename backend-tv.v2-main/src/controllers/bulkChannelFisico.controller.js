@@ -402,11 +402,30 @@ async function processWorkbook(workbook, { commit }) {
   const results = {
     mode: commit ? "COMMIT (se escribió en la base)" : "DRY-RUN (no se escribió nada)",
     successful: [], errors: [],
-    summary: { totalGrupos: 0, ok: 0, errors: 0 },
+    duplicadosEnArchivo: [],
+    summary: { totalGrupos: 0, ok: 0, errors: 0, duplicadosEnArchivo: 0 },
   };
 
   tipoCache = null;
   const groups = groupBySeñal(rows);
+
+  // Filas 100% idénticas dentro del mismo grupo (señal+región) = duplicado real de
+  // digitación. Si difieren en algo (ej. RTES/DCM VMX distintos), es una ruta
+  // primaria/respaldo legítima, no un duplicado — no se marca.
+  for (const [key, groupRows] of groups) {
+    const vistas = new Map(); // JSON de la fila -> [índices]
+    groupRows.forEach((row, idx) => {
+      const firma = JSON.stringify(row);
+      if (!vistas.has(firma)) vistas.set(firma, []);
+      vistas.get(firma).push(idx);
+    });
+    for (const idxs of vistas.values()) {
+      if (idxs.length > 1) {
+        results.duplicadosEnArchivo.push({ grupo: key.replace("|||", " / "), filasIguales: idxs.length });
+        results.summary.duplicadosEnArchivo++;
+      }
+    }
+  }
 
   for (const [, groupRows] of groups) {
     results.summary.totalGrupos++;

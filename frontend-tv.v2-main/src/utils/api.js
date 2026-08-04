@@ -278,6 +278,26 @@ class Api {
             .then((r) => r.data);
     }
 
+    validateExcelSignals(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post("/signals/validate-excel", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
+    bulkCreateSignals(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        return this._axios
+            .post("/signals/bulk-create", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            .then((r) => r.data);
+    }
+
     bulkCreateIrds(file) {
         const formData = new FormData();
         formData.append("file", file);

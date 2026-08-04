@@ -23,8 +23,27 @@ const Card = () => {
     const [signalTv, setSignalTv] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const [diagramSignalIds, setDiagramSignalIds] = useState(new Set());
     const [searchParams, setSearchParams] = useSearchParams();
     const currentPage = Math.max(1, toNum(searchParams.get("page")) || 1);
+
+    // Qué señales ya tienen un diagrama (Channel) creado, para el punto verde/rojo
+    const fetchDiagramSignalIds = useCallback(async () => {
+        try {
+            const res = await api.listChannelDiagrams();
+            const list = Array.isArray(res?.data) ? res.data : [];
+            const ids = new Set(
+                list
+                    .map((c) => (c?.signal && typeof c.signal === "object" ? c.signal._id : c?.signal))
+                    .filter(Boolean)
+                    .map(String)
+            );
+            setDiagramSignalIds(ids);
+        } catch (err) {
+            // No bloquea el render de las tarjetas si esto falla; solo no se pinta el punto.
+            console.error("Error al obtener los diagramas existentes:", err);
+        }
+    }, []);
 
     // Obtener señales desde la API
     const fetchSignals = useCallback(async (abortSignal) => {
@@ -66,8 +85,9 @@ const Card = () => {
     useEffect(() => {
         const controller = new AbortController();
         fetchSignals(controller.signal);
+        fetchDiagramSignalIds();
         return () => controller.abort();
-    }, [fetchSignals]);
+    }, [fetchSignals, fetchDiagramSignalIds]);
 
     const totalCards = signalTv.length;
     const totalPages = Math.max(1, Math.ceil(totalCards / CARDS_PER_PAGE));
@@ -187,8 +207,25 @@ const Card = () => {
                                     </div>
 
                                     <div className="card__footer">
+                                        <span
+                                            className={`diagram-dot ${
+                                                diagramSignalIds.has(String(id))
+                                                    ? "diagram-dot--ok"
+                                                    : "diagram-dot--missing"
+                                            }`}
+                                            title={
+                                                diagramSignalIds.has(String(id))
+                                                    ? "Tiene diagrama"
+                                                    : "Sin diagrama"
+                                            }
+                                            aria-label={
+                                                diagramSignalIds.has(String(id))
+                                                    ? "Tiene diagrama"
+                                                    : "Sin diagrama"
+                                            }
+                                        />
                                         <div className="tech">
-                                            {item.tipoTecnologia}
+                                            {item.tipoTecnologia.toUpperCase()}
                                         </div>
                                         <div className="sev">
                                             Severidad:{" "}

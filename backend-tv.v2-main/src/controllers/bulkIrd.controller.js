@@ -87,20 +87,25 @@ const getOrCreateIrdTipoEquipo = async () => {
   return tipoIrd;
 };
 
-// Procesamiento principal (PERMITE DUPLICADOS)
+// Procesamiento principal (idempotente: no duplica registros existentes)
 const processIrdData = async (excelData) => {
   const results = {
     successful: [],
     errors: [],
+    duplicadosEnArchivo: [],
     summary: {
       totalProcessed: 0,
       irdsCreated: 0,
+      irdsUpdated: 0,
       equiposCreated: 0,
+      equiposUpdated: 0,
       errors: 0,
+      duplicadosEnArchivo: 0,
     },
   };
 
   const tipoIrd = await getOrCreateIrdTipoEquipo();
+  const vistosEnArchivo = new Map();
 
   for (let i = 0; i < excelData.length; i++) {
     const row = excelData[i];
@@ -112,33 +117,65 @@ const processIrdData = async (excelData) => {
       // Limpiar/validar
       const cleanData = cleanAndValidateData(row);
 
-      // ✅ PERMITE DUPLICADOS:
-      // - NO buscamos existingIrd
-      // - NO bloqueamos por nombreIrd o ipAdminIrd
+      const key = `${String(cleanData.nombreIrd).toLowerCase()}|||${String(cleanData.ipAdminIrd).toLowerCase()}`;
+      if (vistosEnArchivo.has(key)) {
+        vistosEnArchivo.get(key).push(rowNumber);
+      } else {
+        vistosEnArchivo.set(key, [rowNumber]);
+      }
 
-      // Crear IRD siempre
-      const newIrd = await Ird.create(cleanData);
-      results.summary.irdsCreated++;
+      // Idempotente: busca por nombreIrd + ipAdminIrd (misma clave única del modelo,
+      // sin distinguir mayúsculas/minúsculas) antes de crear.
+      const nombreEsc = String(cleanData.nombreIrd).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const ipEsc = String(cleanData.ipAdminIrd).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      let ird = await Ird.findOne({
+        nombreIrd: new RegExp(`^${nombreEsc}$`, "i"),
+        ipAdminIrd: new RegExp(`^${ipEsc}$`, "i"),
+      });
 
-      // Crear Equipo asociado siempre (duplicados permitidos)
+      let accionIrd;
+      if (ird) {
+        ird.set(cleanData);
+        await ird.save();
+        results.summary.irdsUpdated++;
+        accionIrd = "actualizado";
+      } else {
+        ird = await Ird.create(cleanData);
+        results.summary.irdsCreated++;
+        accionIrd = "creado";
+      }
+
+      // Equipo asociado: idempotente también, buscando por nombre
       const equipoData = {
         nombre: cleanData.nombreIrd,
         marca: cleanData.marcaIrd || "N/A",
         modelo: cleanData.modelIrd || "N/A",
         tipoNombre: tipoIrd._id,
         ip_gestion: cleanData.ipAdminIrd || null,
-        irdRef: newIrd._id,
+        irdRef: ird._id,
       };
 
-      const newEquipo = await Equipo.create(equipoData);
-      results.summary.equiposCreated++;
+      let equipo = await Equipo.findOne({ nombre: new RegExp(`^${nombreEsc}$`, "i") });
+      let accionEquipo;
+      if (equipo) {
+        equipo.set(equipoData);
+        await equipo.save();
+        results.summary.equiposUpdated++;
+        accionEquipo = "actualizado";
+      } else {
+        equipo = await Equipo.create(equipoData);
+        results.summary.equiposCreated++;
+        accionEquipo = "creado";
+      }
 
       results.successful.push({
         row: rowNumber,
-        irdId: newIrd._id,
-        equipoId: newEquipo._id,
+        irdId: ird._id,
+        equipoId: equipo._id,
         nombre: cleanData.nombreIrd,
         ip: cleanData.ipAdminIrd,
+        accionIrd,
+        accionEquipo,
       });
     } catch (error) {
       results.summary.errors++;
@@ -147,6 +184,14 @@ const processIrdData = async (excelData) => {
         data: row,
         error: error.message,
       });
+    }
+  }
+
+  for (const [key, rows] of vistosEnArchivo) {
+    if (rows.length > 1) {
+      const [nombreIrd, ipAdminIrd] = key.split("|||");
+      results.duplicadosEnArchivo.push({ nombreIrd, ipAdminIrd, filas: rows });
+      results.summary.duplicadosEnArchivo++;
     }
   }
 

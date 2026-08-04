@@ -102,6 +102,9 @@ const Sidebar = () => {
         <li>
           <Link to="/massive-loading-equipos">Carga Masiva Equipos</Link>
         </li>
+        <li>
+          <Link to="/massive-loading-signals">Carga Masiva Señales</Link>
+        </li>
         <hr />
         <li>
           <Link to="/registrar-user">Usuarios</Link>

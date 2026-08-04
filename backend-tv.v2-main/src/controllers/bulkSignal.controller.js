@@ -65,8 +65,11 @@ async function processSignalData(excelData) {
   const results = {
     successful: [],
     errors: [],
-    summary: { totalProcessed: 0, signalsCreated: 0, errors: 0 },
+    duplicadosEnArchivo: [],
+    summary: { totalProcessed: 0, signalsCreated: 0, signalsUpdated: 0, errors: 0, duplicadosEnArchivo: 0 },
   };
+
+  const vistosEnArchivo = new Map();
 
   for (let i = 0; i < excelData.length; i++) {
     const row = excelData[i];
@@ -79,13 +82,36 @@ async function processSignalData(excelData) {
       const warnings = [];
       const contactIds = await resolveContactIds(contactNames, warnings);
 
-      const newSignal = await Signal.create({ ...cleaned, contact: contactIds });
-      results.summary.signalsCreated++;
+      const key = `${cleaned.nameChannel.toLowerCase()}|||${cleaned.tipoTecnologia.toLowerCase()}`;
+      if (vistosEnArchivo.has(key)) {
+        vistosEnArchivo.get(key).push(rowNumber);
+      } else {
+        vistosEnArchivo.set(key, [rowNumber]);
+      }
+
+      // Idempotente: la clave natural del modelo es nameChannel + tipoTecnologia
+      let signal = await Signal.findOne({
+        nameChannel: cleaned.nameChannel,
+        tipoTecnologia: cleaned.tipoTecnologia,
+      });
+
+      let accion;
+      if (signal) {
+        signal.set({ ...cleaned, contact: contactIds });
+        await signal.save();
+        results.summary.signalsUpdated++;
+        accion = "actualizada";
+      } else {
+        signal = await Signal.create({ ...cleaned, contact: contactIds });
+        results.summary.signalsCreated++;
+        accion = "creada";
+      }
 
       results.successful.push({
         row: rowNumber,
-        signalId: newSignal._id,
+        signalId: signal._id,
         nameChannel: cleaned.nameChannel,
+        accion,
         warnings: warnings.length ? warnings : undefined,
       });
     } catch (error) {
@@ -95,6 +121,14 @@ async function processSignalData(excelData) {
         message = `Duplicado: ya existe una señal con nameChannel+tipoTecnologia = "${row.nameChannel}" + "${row.tipoTecnologia}".`;
       }
       results.errors.push({ row: rowNumber, data: row, error: message });
+    }
+  }
+
+  for (const [key, rows] of vistosEnArchivo) {
+    if (rows.length > 1) {
+      const [nameChannel, tipoTecnologia] = key.split("|||");
+      results.duplicadosEnArchivo.push({ nameChannel, tipoTecnologia, filas: rows });
+      results.summary.duplicadosEnArchivo++;
     }
   }
 

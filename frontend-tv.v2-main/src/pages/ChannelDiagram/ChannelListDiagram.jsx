@@ -157,13 +157,28 @@ const ChannelListDiagram = () => {
 
   return (
     <div className="outlet-main" style={{ width: '100%', margin: "0 auto" }}>
-      <h2>Lista de Channels</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <h2 style={{ margin: 0 }}>Lista de Diagramas</h2>
+        <span
+          style={{
+            display: "inline-block",
+            padding: "4px 14px",
+            borderRadius: 999,
+            background: "#1F4E78",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+          }}
+        >
+          Total de diagramas: {channels.length}
+        </span>
+      </div>
       <button
         className="button btn-primary"
         onClick={handleCreateNewChannel}
-        style={{ marginBottom: "1rem" }}
+        style={{ marginBottom: "1rem", marginTop: "1rem" }}
       >
-        + Crear nuevo Channel
+        + Crear nuevo Diagrama
       </button>
 
       <input
@@ -194,7 +209,7 @@ const ChannelListDiagram = () => {
             fontWeight: 500,
           }}
         >
-          Los canales marcados como <strong>Demo</strong> son diagramas de ejemplo
+          Los diagramas marcados como <strong>Demo</strong> son diagramas de ejemplo
           listos para inspeccionar el flujo sin necesidad de backend.
         </div>
       )}
@@ -216,7 +231,7 @@ const ChannelListDiagram = () => {
           {pagedChannels.length === 0 ? (
             <tr>
               <td colSpan={5} style={{ textAlign: "center", padding: "1rem" }}>
-                No hay canales disponibles
+                No hay diagramas disponibles
               </td>
             </tr>
           ) : (
