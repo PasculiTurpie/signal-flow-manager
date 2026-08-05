@@ -195,6 +195,9 @@ function makeNode(id, equipo, label, position) {
       equipoId: String(equipo._id),
       equipoNombre: equipo.nombre,
       equipoTipo: equipo.tipoNombreLower || equipo.tipoNombre,
+      // Necesario para que el panel lateral (getIdIrd) encuentre el IRD real:
+      // el frontend busca esto en data.irdRef, no le basta con equipoId.
+      ...(equipo.irdRef ? { irdRef: String(equipo.irdRef) } : {}),
       type: "custom",
     },
     handles: [],
