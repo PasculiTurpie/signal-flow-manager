@@ -1,5 +1,7 @@
 const Signal = require("../models/signal.model");
 const { escapeRegex } = require("../../helpers/escapeRegex");
+const { isIpLikeKeyword, mergeSignalResults } = require("../services/mplsMulticast");
+const { findSignalsByMplsMulticast } = require("../services/mplsMulticastSearch.service");
 
 module.exports.createSignal = async (req, res) => {
   try {
@@ -148,6 +150,14 @@ module.exports.searchSignals = async (req, res) => {
         const bCn = toNum(b.numberChannelCn);
         return aCn - bCn;
       });
+    }
+
+    // 🌐 Si el texto parece una IP (completa o parcial), además busca el
+    // multicast de salida hacia el MPLS. Esas señales van primero y traen
+    // `mplsMulticast` con la(s) IP(s) que coincidieron.
+    if (isIpLikeKeyword(keyword)) {
+      const multicastSignals = await findSignalsByMplsMulticast(keyword);
+      results = mergeSignalResults(results, multicastSignals);
     }
 
     return res.json(results);

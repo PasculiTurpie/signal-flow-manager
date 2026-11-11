@@ -26,6 +26,7 @@ const RegisterSchema = Yup.object().shape({
   confirmPassword: Yup.string()
     .required("Confirma tu contraseña")
     .oneOf([Yup.ref("password"), null], "Las contraseñas deben coincidir"),
+  role: Yup.string().oneOf(["operador", "admin"], "Rol inválido").required("Selecciona un rol"),
 });
 
 const RegisterUser = () => {
@@ -55,17 +56,16 @@ const RegisterUser = () => {
           email: "",
           password: "",
           confirmPassword: "",
+          role: "operador",
         }}
         validationSchema={RegisterSchema}
         onSubmit={async (values, { resetForm }) => {
           try {
-            // 👉 Solo mandamos lo que el backend acepta
             await api.createUser({
               username: values.username.trim(),
               email: values.email.toLowerCase(),
               password: values.password,
-              // si quisieras mandar role:
-              // role: "admin",
+              role: values.role,
             });
 
             Swal.fire({
@@ -157,25 +157,30 @@ const RegisterUser = () => {
                     type="button"
                     className="icon__password-toggle"
                     onClick={toggleShowPassword}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     style={{
                       position: "absolute",
                       right: 5,
                       top: 28,
                     }}
                   >
-                    {/* {showPassword ? (
+                    {showPassword ? (
                       <img
                         className="icon__password"
                         src={hidden__Password}
-                        alt="ocultar"
+                        alt="Ocultar contraseña"
+                        width={20}
+                        height={20}
                       />
                     ) : (
                       <img
                         className="icon__password"
                         src={show__Password}
-                        alt="mostrar"
+                        alt="Mostrar contraseña"
+                        width={20}
+                        height={20}
                       />
-                    )} */}
+                    )}
                   </button>
                   {errors.password && touched.password && (
                     <div className="form__group-error">
@@ -206,31 +211,55 @@ const RegisterUser = () => {
                     type="button"
                     className="icon__password-toggle"
                     onClick={toggleShowConfirmPassword}
+                    aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     style={{
                       position: "absolute",
                       right: 5,
                       top: 28,
                     }}
                   >
-                    {/* {showConfirmPassword ? (
+                    {showConfirmPassword ? (
                       <img
                         className="icon__password"
                         src={hidden__Password}
-                        alt="ocultar"
+                        alt="Ocultar contraseña"
+                        width={20}
+                        height={20}
                       />
                     ) : (
                       <img
                         className="icon__password"
                         src={show__Password}
-                        alt="mostrar"
+                        alt="Mostrar contraseña"
+                        width={20}
+                        height={20}
                       />
-                    )} */}
+                    )}
                   </button>
                   {errors.confirmPassword && touched.confirmPassword && (
                     <div className="form__group-error">
                       {errors.confirmPassword}
                     </div>
                   )}
+                </div>
+
+                {/* Rol */}
+                <div className="form__group">
+                  <label htmlFor="role" className="form__group-label">
+                    Rol:
+                  </label>
+                  <Field as="select" className="form__group-input" name="role" id="role">
+                    <option value="operador">Operador</option>
+                    <option value="admin">Administrador</option>
+                  </Field>
+                  {errors.role && touched.role && (
+                    <div className="form__group-error">{errors.role}</div>
+                  )}
+                  <p style={{ fontSize: 13, color: "#666", marginTop: 4 }}>
+                    {values.role === "admin"
+                      ? "Administrador: además de lo anterior, puede hacer cargas masivas (Excel) y gestionar usuarios."
+                      : "Operador: puede agregar/editar señales, contactos y proveedores. No puede hacer cargas masivas ni gestionar usuarios."}
+                  </p>
                 </div>
 
                 <button className="button btn-success" type="submit">

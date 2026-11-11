@@ -5,7 +5,7 @@ const baseSchema = {
   email: Joi.string().email().trim().lowercase(),
   password: Joi.string().min(8).max(128),
   profilePicture: Joi.string().uri().trim().allow(""),
-  role: Joi.string().trim().max(32),
+  role: Joi.string().trim().valid("operador", "admin", "guest"),
 };
 
 const createUserValidation = celebrate({

@@ -215,23 +215,57 @@ const ListarUsers = () => {
                         <table className="table">
                             <thead>
                                 <tr>
+                                    <th>Foto</th>
                                     <th>Usuario</th>
                                     <th>Correo electrónico</th>
+                                    <th>Rol</th>
                                     <th className="action">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {pageItems.length === 0 ? (
                                     <tr>
-                                        <td colSpan={3} style={{ textAlign: "center", color: "#777" }}>
+                                        <td colSpan={5} style={{ textAlign: "center", color: "#777" }}>
                                             Sin datos para mostrar.
                                         </td>
                                     </tr>
                                 ) : (
                                     pageItems.map((user) => (
                                         <tr key={user.id} id={user.id}>
+                                            <td>
+                                                <img
+                                                    src={user.profilePicture || "/images/logoicon.png"}
+                                                    alt={user.username || "Usuario"}
+                                                    width={36}
+                                                    height={36}
+                                                    style={{
+                                                        borderRadius: "50%",
+                                                        objectFit: "cover",
+                                                        border: "1px solid #ddd",
+                                                    }}
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = "/images/logoicon.png";
+                                                    }}
+                                                />
+                                            </td>
                                             <td>{user.username}</td>
                                             <td>{user.email}</td>
+                                            <td>
+                                                <span
+                                                    style={{
+                                                        display: "inline-block",
+                                                        padding: "3px 10px",
+                                                        borderRadius: 999,
+                                                        fontSize: 12,
+                                                        fontWeight: 700,
+                                                        color: user.role === "admin" ? "#7a1f0d" : "#0d4d2e",
+                                                        background: user.role === "admin" ? "#fdece9" : "#e9f7ef",
+                                                    }}
+                                                >
+                                                    {user.role === "admin" ? "Administrador" : "Operador"}
+                                                </span>
+                                            </td>
                                             <td className="button-action">
                                                 <button
                                                     className="btn btn-warning"
