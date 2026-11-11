@@ -1,0 +1,535 @@
+diff --git a/backend-tv.v2-main/src/controllers/signal.controller.js b/backend-tv.v2-main/src/controllers/signal.controller.js
+index 33c73eb..da5c807 100644
+--- a/backend-tv.v2-main/src/controllers/signal.controller.js
++++ b/backend-tv.v2-main/src/controllers/signal.controller.js
+@@ -1,5 +1,7 @@
+ const Signal = require("../models/signal.model");
+ const { escapeRegex } = require("../../helpers/escapeRegex");
++const { isIpLikeKeyword, mergeSignalResults } = require("../services/mplsMulticast");
++const { findSignalsByMplsMulticast } = require("../services/mplsMulticastSearch.service");
+ 
+ module.exports.createSignal = async (req, res) => {
+   try {
+@@ -150,6 +152,14 @@ module.exports.searchSignals = async (req, res) => {
+       });
+     }
+ 
++    // 🌐 Si el texto parece una IP (completa o parcial), además busca el
++    // multicast de salida hacia el MPLS. Esas señales van primero y traen
++    // `mplsMulticast` con la(s) IP(s) que coincidieron.
++    if (isIpLikeKeyword(keyword)) {
++      const multicastSignals = await findSignalsByMplsMulticast(keyword);
++      results = mergeSignalResults(results, multicastSignals);
++    }
++
+     return res.json(results);
+   } catch (error) {
+     console.error("Error en búsqueda:", error);
+diff --git a/backend-tv.v2-main/src/services/mplsMulticast.js b/backend-tv.v2-main/src/services/mplsMulticast.js
+new file mode 100644
+index 0000000..3fd56e2
+--- /dev/null
++++ b/backend-tv.v2-main/src/services/mplsMulticast.js
+@@ -0,0 +1,166 @@
++// Utilidades puras para buscar el multicast de salida hacia el MPLS.
++//
++// Dónde vive el dato (según cómo se creó el canal):
++//   - Carga masiva (bulkChannelFisico): arista asr -> mpls con
++//     data.labelEnd = "IP MULT VMX 239.x.x.x:puerto / IP FUENTE a.b.c.d"
++//   - Editor de diagrama: data.multicast, data.labelStart/labelEnd, data.tooltip,
++//     label o endpointLabels.
++// Por eso se extraen las IPs desde todos esos textos y solo se consideran
++// multicast las del rango 224.0.0.0 - 239.255.255.255 (para no confundir la
++// "IP FUENTE", que es unicast), salvo que vengan en data.multicast, que es el
++// campo explícito de multicast.
++
++const IP_QUERY_REGEX = /^\d{1,3}(?:\.\d{0,3}){1,3}(?::\d{0,5})?$/;
++const FULL_IPV4_REGEX = /^\d{1,3}(?:\.\d{1,3}){3}$/;
++const IPV4_WITH_PORT_REGEX = /(\d{1,3}(?:\.\d{1,3}){3})(?::(\d{1,5}))?/g;
++
++const isValidIpv4 = (ip) =>
++  FULL_IPV4_REGEX.test(ip) && ip.split(".").every((octet) => Number(octet) <= 255);
++
++const isMulticastRange = (ip) => {
++  const first = Number(String(ip).split(".")[0]);
++  return first >= 224 && first <= 239;
++};
++
++/** "239.1.1", "239.1.1.1", "239.1.1.1:5000" => true. "101" o "tnt" => false. */
++const isIpLikeKeyword = (keyword) => IP_QUERY_REGEX.test(String(keyword ?? "").trim());
++
++/**
++ * Interpreta lo que escribió el usuario.
++ * - IP completa (4 octetos): coincidencia exacta de IP (y de puerto si lo escribió).
++ * - IP parcial: coincidencia por prefijo ("239.10" no encuentra "239.110...").
++ */
++const parseKeyword = (keyword) => {
++  const raw = String(keyword ?? "").trim();
++  if (!IP_QUERY_REGEX.test(raw)) return null;
++  const [ip, port] = raw.split(":");
++  const hasPort = port !== undefined && port !== "";
++  return {
++    ip,
++    port: hasPort ? port : null,
++    prefix: raw,
++    exact: FULL_IPV4_REGEX.test(ip) && (port === undefined || hasPort),
++  };
++};
++
++const matchesKeyword = (entry, parsed) => {
++  if (!parsed) return false;
++  if (parsed.exact) {
++    return entry.ip === parsed.ip && (parsed.port === null || entry.port === parsed.port);
++  }
++  return entry.value.startsWith(parsed.prefix);
++};
++
++const asText = (value) => (typeof value === "string" ? value : "");
++
++/** Nodo MPLS: por id, tipo de equipo, nombre del equipo o etiqueta. */
++const isMplsNode = (node) => {
++  if (!node) return false;
++  const equipo = node.equipo && typeof node.equipo === "object" ? node.equipo : null;
++  const tipo = equipo?.tipoNombre;
++  const candidates = [
++    node.id,
++    node.data?.equipoTipo,
++    node.data?.equipoNombre,
++    node.data?.label,
++    equipo?.nombre,
++    typeof tipo === "string" ? tipo : tipo?.tipoNombre,
++    tipo?.tipoNombreLower,
++  ];
++  return candidates.some((candidate) => /mpls/i.test(asText(candidate)));
++};
++
++const collectEdgeTexts = (edge) => {
++  const data = edge?.data || {};
++  const texts = [
++    { field: "labelEnd", text: asText(data.labelEnd) },
++    { field: "labelStart", text: asText(data.labelStart) },
++    { field: "tooltip", text: asText(data.tooltip) },
++    { field: "label", text: asText(edge?.label) || asText(data.label) },
++  ];
++  const endpointLabels = data.endpointLabels;
++  if (endpointLabels && typeof endpointLabels === "object") {
++    Object.values(endpointLabels).forEach((value) =>
++      texts.push({ field: "endpointLabels", text: asText(value) })
++    );
++  }
++  return texts;
++};
++
++/** Todas las IPs multicast (con puerto opcional) de una arista, sin repetidos. */
++const extractMulticastEntries = (edge) => {
++  const entries = new Map();
++
++  const push = (field, ip, port) => {
++    if (!isValidIpv4(ip)) return;
++    const value = port ? `${ip}:${port}` : ip;
++    if (!entries.has(value)) entries.set(value, { ip, port: port || null, value, field });
++  };
++
++  const explicit = asText(edge?.data?.multicast);
++  for (const match of explicit.matchAll(IPV4_WITH_PORT_REGEX)) {
++    push("multicast", match[1], match[2]);
++  }
++
++  collectEdgeTexts(edge).forEach(({ field, text }) => {
++    for (const match of text.matchAll(IPV4_WITH_PORT_REGEX)) {
++      if (isMulticastRange(match[1])) push(field, match[1], match[2]);
++    }
++  });
++
++  return [...entries.values()];
++};
++
++/**
++ * Coincidencias de un canal: aristas hacia el MPLS cuyo multicast calza con
++ * lo buscado. Devuelve [{ edgeId, ip, port, value, field, mplsNode }].
++ */
++const collectMplsMulticastMatches = (channel, keyword) => {
++  const parsed = parseKeyword(keyword);
++  if (!parsed) return [];
++
++  const nodes = Array.isArray(channel?.nodes) ? channel.nodes : [];
++  const edges = Array.isArray(channel?.edges) ? channel.edges : [];
++  const nodeById = new Map(nodes.map((node) => [node.id, node]));
++
++  const matches = [];
++  edges.forEach((edge) => {
++    // Salida hacia MPLS: target MPLS (ida/bi) o, si la arista está invertida
++    // ("vuelta"), source MPLS.
++    const direction = edge?.data?.direction || "ida";
++    const mplsId = direction === "vuelta" ? edge.source : edge.target;
++    const mplsNode = nodeById.get(mplsId);
++    if (!isMplsNode(mplsNode)) return;
++
++    extractMulticastEntries(edge)
++      .filter((entry) => matchesKeyword(entry, parsed))
++      .forEach((entry) =>
++        matches.push({
++          edgeId: edge.id,
++          ip: entry.ip,
++          port: entry.port,
++          value: entry.value,
++          field: entry.field,
++          mplsNode: mplsNode?.data?.label || mplsNode?.equipo?.nombre || mplsNode?.id || null,
++        })
++      );
++  });
++
++  return matches;
++};
++
++/** Señales con coincidencia de multicast primero; luego el resto sin repetir. */
++const mergeSignalResults = (baseSignals, multicastSignals) => {
++  const seen = new Set(multicastSignals.map((signal) => String(signal._id)));
++  const rest = baseSignals.filter((signal) => !seen.has(String(signal._id)));
++  return [...multicastSignals, ...rest];
++};
++
++module.exports = {
++  isIpLikeKeyword,
++  parseKeyword,
++  isMplsNode,
++  extractMulticastEntries,
++  collectMplsMulticastMatches,
++  mergeSignalResults,
++};
+diff --git a/backend-tv.v2-main/src/services/mplsMulticast.test.js b/backend-tv.v2-main/src/services/mplsMulticast.test.js
+new file mode 100644
+index 0000000..0806436
+--- /dev/null
++++ b/backend-tv.v2-main/src/services/mplsMulticast.test.js
+@@ -0,0 +1,163 @@
++const { test, describe } = require("node:test");
++const assert = require("node:assert/strict");
++
++const {
++  isIpLikeKeyword,
++  parseKeyword,
++  isMplsNode,
++  extractMulticastEntries,
++  collectMplsMulticastMatches,
++  mergeSignalResults,
++} = require("./mplsMulticast");
++
++// Canal con la misma forma que genera bulkChannelFisico.controller.js
++const bulkChannel = () => ({
++  nodes: [
++    { id: "asr", data: { label: "ASR-01", equipoTipo: "router" } },
++    { id: "mpls", data: { label: "NODO TEMUCO", equipoTipo: "mpls" } },
++    { id: "sw_in", data: { label: "SW-IN", equipoTipo: "switch" } },
++  ],
++  edges: [
++    {
++      id: "e_swin_asr",
++      source: "sw_in",
++      target: "asr",
++      data: { direction: "bi", labelStart: "", labelEnd: "" },
++    },
++    {
++      id: "e_asr_mpls",
++      source: "asr",
++      target: "mpls",
++      data: {
++        direction: "ida",
++        labelStart: "",
++        labelEnd: "IP MULT VMX 239.10.5.20:5000 / IP FUENTE 10.20.30.40",
++      },
++    },
++    {
++      id: "e_ird_swin",
++      source: "ird",
++      target: "sw_in",
++      data: { direction: "ida", labelStart: "PORT DATA IP MULT: 239.1.1.1", labelEnd: "" },
++    },
++  ],
++});
++
++describe("isIpLikeKeyword", () => {
++  test("acepta IP completa, parcial y con puerto", () => {
++    ["239.10.5.20", "239.10.5", "239.10.", "239.1", "239.10.5.20:5000"].forEach((k) =>
++      assert.equal(isIpLikeKeyword(k), true, k)
++    );
++  });
++
++  test("rechaza números de canal y texto", () => {
++    ["101", "tnt", "", "239", "a.b.c.d", "239.10.5.20.1"].forEach((k) =>
++      assert.equal(isIpLikeKeyword(k), false, k)
++    );
++  });
++});
++
++describe("parseKeyword", () => {
++  test("IP completa es exacta; parcial es por prefijo", () => {
++    assert.equal(parseKeyword("239.10.5.20").exact, true);
++    assert.equal(parseKeyword("239.10.5").exact, false);
++    assert.equal(parseKeyword("239.10.5.20:5000").port, "5000");
++  });
++});
++
++describe("isMplsNode", () => {
++  test("detecta por id, tipo o nombre", () => {
++    assert.equal(isMplsNode({ id: "mpls" }), true);
++    assert.equal(isMplsNode({ id: "n1", data: { equipoTipo: "MPLS" } }), true);
++    assert.equal(
++      isMplsNode({ id: "n2", equipo: { nombre: "x", tipoNombre: { tipoNombre: "Nodo MPLS" } } }),
++      true
++    );
++    assert.equal(isMplsNode({ id: "asr", data: { label: "ASR-01" } }), false);
++    assert.equal(isMplsNode(undefined), false);
++  });
++});
++
++describe("extractMulticastEntries", () => {
++  test("ignora la IP FUENTE unicast y conserva el puerto", () => {
++    const edge = bulkChannel().edges[1];
++    const entries = extractMulticastEntries(edge);
++    assert.equal(entries.length, 1);
++    assert.equal(entries[0].value, "239.10.5.20:5000");
++  });
++
++  test("data.multicast se acepta aunque no esté en rango multicast", () => {
++    const entries = extractMulticastEntries({ data: { multicast: "10.0.0.9" } });
++    assert.deepEqual(
++      entries.map((e) => e.value),
++      ["10.0.0.9"]
++    );
++  });
++});
++
++describe("collectMplsMulticastMatches", () => {
++  test("encuentra por IP exacta, con y sin puerto", () => {
++    const byIp = collectMplsMulticastMatches(bulkChannel(), "239.10.5.20");
++    assert.equal(byIp.length, 1);
++    assert.equal(byIp[0].edgeId, "e_asr_mpls");
++    assert.equal(byIp[0].mplsNode, "NODO TEMUCO");
++
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.10.5.20:5000").length, 1);
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.10.5.20:6000").length, 0);
++  });
++
++  test("IP parcial funciona por prefijo", () => {
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.10.5").length, 1);
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.10.").length, 1);
++    // prefijo de texto (tipo autocompletar): "239.1" calza con 239.10.5.20
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.1").length, 1);
++    // pero no es subcadena: "39.10" o "239.11" no calzan
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.11").length, 0);
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "10.5").length, 0);
++  });
++
++  test("IP exacta no confunde .20 con .200", () => {
++    const channel = bulkChannel();
++    channel.edges[1].data.labelEnd = "IP MULT VMX 239.10.5.200";
++    assert.equal(collectMplsMulticastMatches(channel, "239.10.5.20").length, 0);
++    assert.equal(collectMplsMulticastMatches(channel, "239.10.5.200").length, 1);
++  });
++
++  test("no devuelve multicast de aristas que no van al MPLS", () => {
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "239.1.1.1").length, 0);
++  });
++
++  test("no devuelve la IP fuente unicast", () => {
++    assert.equal(collectMplsMulticastMatches(bulkChannel(), "10.20.30.40").length, 0);
++  });
++
++  test("arista invertida (vuelta) con source MPLS cuenta como salida al MPLS", () => {
++    const channel = {
++      nodes: [
++        { id: "a", data: { label: "ASR" } },
++        { id: "m", data: { label: "X", equipoTipo: "mpls" } },
++      ],
++      edges: [
++        { id: "e1", source: "m", target: "a", data: { direction: "vuelta", multicast: "239.2.2.2" } },
++      ],
++    };
++    assert.equal(collectMplsMulticastMatches(channel, "239.2.2.2").length, 1);
++  });
++
++  test("keyword no IP devuelve vacío", () => {
++    assert.deepEqual(collectMplsMulticastMatches(bulkChannel(), "tnt"), []);
++  });
++});
++
++describe("mergeSignalResults", () => {
++  test("multicast primero y sin duplicar", () => {
++    const base = [{ _id: "1" }, { _id: "2" }];
++    const mcast = [{ _id: "2", mplsMulticast: [{}] }, { _id: "3", mplsMulticast: [{}] }];
++    const merged = mergeSignalResults(base, mcast);
++    assert.deepEqual(
++      merged.map((s) => s._id),
++      ["2", "3", "1"]
++    );
++    assert.ok(merged[0].mplsMulticast);
++  });
++});
+diff --git a/backend-tv.v2-main/src/services/mplsMulticastSearch.service.js b/backend-tv.v2-main/src/services/mplsMulticastSearch.service.js
+new file mode 100644
+index 0000000..d52963f
+--- /dev/null
++++ b/backend-tv.v2-main/src/services/mplsMulticastSearch.service.js
+@@ -0,0 +1,66 @@
++const Channel = require("../models/channel.model");
++const Signal = require("../models/signal.model");
++const { escapeRegex } = require("../../helpers/escapeRegex");
++const { parseKeyword, collectMplsMulticastMatches } = require("./mplsMulticast");
++
++const MAX_CHANNELS = 300;
++
++/**
++ * Señales cuyo canal tiene una salida (arista) hacia el MPLS con un multicast
++ * que calza con `keyword` (IP completa o parcial, con puerto opcional).
++ * Cada señal devuelta incluye `mplsMulticast: [{ channelId, edgeId, ip, port,
++ * value, field, mplsNode }]`.
++ */
++const findSignalsByMplsMulticast = async (keyword) => {
++  const parsed = parseKeyword(keyword);
++  if (!parsed) return [];
++
++  // Prefiltro en Mongo (subcadena, superconjunto); el criterio fino
++  // (exacto/prefijo, rango multicast, nodo MPLS) se aplica en memoria.
++  const rx = new RegExp(escapeRegex(parsed.ip));
++  const channels = await Channel.find({
++    edges: {
++      $elemMatch: {
++        $or: [
++          { "data.multicast": rx },
++          { "data.labelEnd": rx },
++          { "data.labelStart": rx },
++          { "data.tooltip": rx },
++          { label: rx },
++        ],
++      },
++    },
++  })
++    .select("signal nodes edges")
++    .limit(MAX_CHANNELS)
++    .populate({
++      path: "nodes.equipo",
++      select: "nombre tipoNombre",
++      populate: { path: "tipoNombre", select: "tipoNombre tipoNombreLower" },
++    })
++    .lean();
++
++  const matchesBySignal = new Map();
++  channels.forEach((channel) => {
++    if (!channel?.signal) return;
++    const matches = collectMplsMulticastMatches(channel, keyword);
++    if (!matches.length) return;
++    const signalId = String(channel.signal);
++    const list = matchesBySignal.get(signalId) || [];
++    matches.forEach((match) => list.push({ ...match, channelId: String(channel._id) }));
++    matchesBySignal.set(signalId, list);
++  });
++
++  if (!matchesBySignal.size) return [];
++
++  const signals = await Signal.find({ _id: { $in: [...matchesBySignal.keys()] } })
++    .populate("contact")
++    .lean();
++
++  return signals.map((signal) => ({
++    ...signal,
++    mplsMulticast: matchesBySignal.get(String(signal._id)) || [],
++  }));
++};
++
++module.exports = { findSignalsByMplsMulticast };
+diff --git a/frontend-tv.v2-main/src/components/Search/Search.jsx b/frontend-tv.v2-main/src/components/Search/Search.jsx
+index 59eecab..14a4d20 100644
+--- a/frontend-tv.v2-main/src/components/Search/Search.jsx
++++ b/frontend-tv.v2-main/src/components/Search/Search.jsx
+@@ -91,7 +91,7 @@ const Search = () => {
+                     {...field}
+                     className="input__text-search"
+                     type="search"
+-                    placeholder="Buscar canal, número, tecnología..."
++                    placeholder="Buscar canal, número, tecnología o IP multicast..."
+                     value={term}
+                     onChange={(e) => {
+                       const value = e.target.value;
+diff --git a/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.css b/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.css
+index 0de5b5d..39d7cec 100644
+--- a/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.css
++++ b/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.css
+@@ -32,3 +32,35 @@
+     text-align: center;
+     color     : #4b5563;
+ }
++
++/* Multicast de salida hacia MPLS (resultado de buscar por IP) */
++.card__mcast {
++    display        : flex;
++    flex-wrap      : wrap;
++    align-items    : center;
++    justify-content: center;
++    gap            : 6px;
++    padding        : 8px 10px;
++    background     : rgba(55, 93, 157, .08);
++    border-top     : 1px solid rgba(55, 93, 157, .15);
++}
++
++.card__mcast-title {
++    width         : 100%;
++    font-size     : 11px;
++    font-weight   : 700;
++    letter-spacing: .3px;
++    text-transform: uppercase;
++    color         : #375d9d;
++}
++
++.card__mcast-chip {
++    font-family  : ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
++    font-size    : 12px;
++    font-weight  : 700;
++    color        : #111827;
++    background   : #fff;
++    border       : 1px solid rgba(55, 93, 157, .35);
++    border-radius: 6px;
++    padding      : 3px 6px;
++}
+diff --git a/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.jsx b/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.jsx
+index ecd493c..5936d7d 100644
+--- a/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.jsx
++++ b/frontend-tv.v2-main/src/components/SearchFilter/SearchFilter.jsx
+@@ -5,6 +5,11 @@ import Loader from "../../components/Loader/Loader";
+ import "../../components/Card/Card.css";
+ import "./SearchFilter.css";
+ 
++// Un canal puede tener varias ramas con el mismo multicast: no repetir chips.
++const uniqueMulticastValues = (matches) => [
++  ...new Set(matches.map((m) => m?.value).filter(Boolean)),
++];
++
+ const SearchFilter = () => {
+   const [querySearch] = useSearchParams();
+   const keyword = (querySearch.get("keyword") ?? "").trim();
+@@ -196,6 +201,25 @@ const SearchFilter = () => {
+                     )}
+                   </div>
+ 
++                  {Array.isArray(signalItem.mplsMulticast) &&
++                    signalItem.mplsMulticast.length > 0 && (
++                      <div
++                        className="card__mcast"
++                        title="Multicast de salida hacia el MPLS"
++                      >
++                        <span className="card__mcast-title">
++                          Multicast a MPLS
++                        </span>
++                        {uniqueMulticastValues(signalItem.mplsMulticast).map(
++                          (value) => (
++                            <span className="card__mcast-chip" key={value}>
++                              {value}
++                            </span>
++                          )
++                        )}
++                      </div>
++                    )}
++
+                   <div className="card__footer">
+                     <div className="tech">{signalItem.tipoTecnologia}</div>
+                     <div className="sev">
