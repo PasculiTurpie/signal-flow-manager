@@ -6,13 +6,19 @@
 //   - Editor de diagrama: data.multicast, data.labelStart/labelEnd, data.tooltip,
 //     label o endpointLabels.
 // Por eso se extraen las IPs desde todos esos textos y solo se consideran
-// multicast las del rango 224.0.0.0 - 239.255.255.255 (para no confundir la
-// "IP FUENTE", que es unicast), salvo que vengan en data.multicast, que es el
-// campo explícito de multicast.
+// multicast las del rango 224.0.0.0 - 239.255.255.255 o las rotuladas "IP MULT"
+// (para no confundir la "IP FUENTE", que es unicast), además de lo que venga en
+// data.multicast, que es el campo explícito de multicast.
 
 const IP_QUERY_REGEX = /^\d{1,3}(?:\.\d{0,3}){1,3}(?::\d{0,5})?$/;
 const FULL_IPV4_REGEX = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 const IPV4_WITH_PORT_REGEX = /(\d{1,3}(?:\.\d{1,3}){3})(?::(\d{1,5}))?/g;
+// "IP MULT VMX 239.1.1.1:5000", "IP MULT: 192.168.1.5". Lo que la carga masiva
+// y los operadores rotulan como IP MULT cuenta como multicast aunque no esté en
+// el rango 224-239 (en esta red también se usan 192.168.x.x como "IP multicast").
+// "IP FUENTE ..." NO lo captura, así que la IP fuente sigue excluida.
+const LABELED_MULTICAST_REGEX =
+  /IP\s*MULT(?:ICAST)?(?:\s+[A-Za-z]+)?\s*:?\s*(\d{1,3}(?:\.\d{1,3}){3})(?::(\d{1,5}))?/gi;
 
 const isValidIpv4 = (ip) =>
   FULL_IPV4_REGEX.test(ip) && ip.split(".").every((octet) => Number(octet) <= 255);
@@ -103,6 +109,9 @@ const extractMulticastEntries = (edge) => {
   }
 
   collectEdgeTexts(edge).forEach(({ field, text }) => {
+    for (const match of text.matchAll(LABELED_MULTICAST_REGEX)) {
+      push(field, match[1], match[2]);
+    }
     for (const match of text.matchAll(IPV4_WITH_PORT_REGEX)) {
       if (isMulticastRange(match[1])) push(field, match[1], match[2]);
     }
