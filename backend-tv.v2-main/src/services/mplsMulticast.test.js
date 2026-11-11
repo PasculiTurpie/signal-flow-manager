@@ -95,6 +95,26 @@ describe("extractMulticastEntries", () => {
   });
 });
 
+describe("mcast_prod rotulado como IP MULT", () => {
+  test("se encuentra aunque no esté en el rango 224-239", () => {
+    const channel = bulkChannel();
+    channel.edges[1].data.labelEnd = "IP MULT VMX 192.168.50.7:5000 / IP FUENTE 10.20.30.40";
+    const found = collectMplsMulticastMatches(channel, "192.168.50.7");
+    assert.equal(found.length, 1);
+    assert.equal(found[0].value, "192.168.50.7:5000");
+    // y la IP fuente sigue sin contarse como multicast
+    assert.equal(collectMplsMulticastMatches(channel, "10.20.30.40").length, 0);
+  });
+
+  test("tolera variantes de rótulo y mayúsculas", () => {
+    ["IP MULT: 239.9.9.9", "ip mult vmx 239.9.9.9", "IP MULTICAST 239.9.9.9"].forEach((label) => {
+      const channel = bulkChannel();
+      channel.edges[1].data.labelEnd = label;
+      assert.equal(collectMplsMulticastMatches(channel, "239.9.9.9").length, 1, label);
+    });
+  });
+});
+
 describe("collectMplsMulticastMatches", () => {
   test("encuentra por IP exacta, con y sin puerto", () => {
     const byIp = collectMplsMulticastMatches(bulkChannel(), "239.10.5.20");
