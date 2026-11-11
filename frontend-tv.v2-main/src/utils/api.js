@@ -1,4 +1,5 @@
 import axios from "axios";
+import Swal from "sweetalert2";
 
 // --- Control de refresh único + cola ---
 let isRefreshing = false;
@@ -100,6 +101,20 @@ class Api {
                                 reject(e);
                             }
                         });
+                    });
+                }
+
+                // Sin permisos (rol operador intentando algo reservado a admin, etc.)
+                // Se avisa una sola vez por respuesta con SweetAlert y se sigue
+                // rechazando la promesa para que cada pantalla maneje el resto si quiere.
+                if (status === 403) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Sin permisos",
+                        text:
+                            error?.response?.data?.message ||
+                            "No tienes permisos para realizar esta acción. Contacta a un administrador si crees que esto es un error.",
+                        confirmButtonText: "Entendido",
                     });
                 }
 

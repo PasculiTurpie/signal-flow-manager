@@ -27,7 +27,8 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      default: "guest",
+      enum: ["operador", "admin", "guest"], // "guest" se mantiene por compatibilidad con cuentas creadas antes de este cambio
+      default: "operador",
       trim: true,
     },
   },

@@ -8,6 +8,7 @@ import { clearLocalStorage } from '../../utils/localStorageUtils';
 
 const Sidebar = () => {
   const { user } = useContext(UserContext);
+  const isAdmin = user?.role === "admin" || user?.role === "superadmin";
 
   const handleCreateTopologyClick = () => {
     const cleaned = clearLocalStorage();
@@ -38,32 +39,30 @@ const Sidebar = () => {
           <Link to="/">Inicio</Link>
         </li>
         <hr />
-        <p className="nodo">
-          Origen
-        </p>
-        <li>
-          <Link to="/satelite">Satélite</Link>
-        </li>
-        {/* <li>
-          <Link to="/str">STR</Link>
-        </li>
-        <li>
-          <Link to="/str">Fibra</Link>
-        </li> */}
-        <hr />
-        <p className="nodo">
-          Equipos
-        </p>
-        <li>
-          <Link to="/equipment">Equipos</Link>
-        </li>
-        <li>
-          <Link to="/register-type-equitment">Tipo Equipo</Link>
-        </li>
-        <li>
-          <Link to="/ird">Encoder Ird</Link>
-        </li>
-        <hr />
+        {isAdmin && (
+          <>
+            <p className="nodo">
+              Origen
+            </p>
+            <li>
+              <Link to="/satelite">Satélite</Link>
+            </li>
+            <hr />
+            <p className="nodo">
+              Equipos
+            </p>
+            <li>
+              <Link to="/equipment">Equipos</Link>
+            </li>
+            <li>
+              <Link to="/register-type-equitment">Tipo Equipo</Link>
+            </li>
+            <li>
+              <Link to="/ird">Encoder Ird</Link>
+            </li>
+            <hr />
+          </>
+        )}
         <p className="nodo">
           Canal
         </p>
@@ -76,39 +75,43 @@ const Sidebar = () => {
         <li>
           <Link to="/signal-contact">Asignar contacto</Link>
         </li>
-        <hr />
-        <p className="nodo">
-          Topología de Señal
-        </p>
-        <li>
-          <Link to="/channel-form" onClick={handleCreateTopologyClick}>Crear topología</Link>
-        </li>
-        <hr />
-        <p className="nodo">
-          Auditoría
-        </p>
-        <li>
-          <Link to="/audit-logs">Logs</Link>
-        </li>
-        <li>
-          <Link to="/massive-loading ">Carga Masiva IRD's</Link>
-        </li>
-        <li>
-          <Link to="/massive-loading-channels">Carga Masiva Diagramas</Link>
-        </li>
-        <li>
-          <Link to="/massive-loading-tipoequipos">Carga Masiva Tipos de Equipo</Link>
-        </li>
-        <li>
-          <Link to="/massive-loading-equipos">Carga Masiva Equipos</Link>
-        </li>
-        <li>
-          <Link to="/massive-loading-signals">Carga Masiva Señales</Link>
-        </li>
-        <hr />
-        <li>
-          <Link to="/registrar-user">Usuarios</Link>
-        </li>
+        {isAdmin && (
+          <>
+            <hr />
+            <p className="nodo">
+              Topología de Señal
+            </p>
+            <li>
+              <Link to="/channel-form" onClick={handleCreateTopologyClick}>Crear topología</Link>
+            </li>
+            <hr />
+            <p className="nodo">
+              Auditoría
+            </p>
+            <li>
+              <Link to="/audit-logs">Logs</Link>
+            </li>
+            <li>
+              <Link to="/massive-loading ">Carga Masiva IRD's</Link>
+            </li>
+            <li>
+              <Link to="/massive-loading-channels">Carga Masiva Diagramas</Link>
+            </li>
+            <li>
+              <Link to="/massive-loading-tipoequipos">Carga Masiva Tipos de Equipo</Link>
+            </li>
+            <li>
+              <Link to="/massive-loading-equipos">Carga Masiva Equipos</Link>
+            </li>
+            <li>
+              <Link to="/massive-loading-signals">Carga Masiva Señales</Link>
+            </li>
+            <hr />
+            <li>
+              <Link to="/registrar-user">Usuarios</Link>
+            </li>
+          </>
+        )}
       </ul>
       
    

@@ -5,6 +5,11 @@ import Loader from "../../components/Loader/Loader";
 import "../../components/Card/Card.css";
 import "./SearchFilter.css";
 
+// Un canal puede tener varias ramas con el mismo multicast: no repetir chips.
+const uniqueMulticastValues = (matches) => [
+  ...new Set(matches.map((m) => m?.value).filter(Boolean)),
+];
+
 const SearchFilter = () => {
   const [querySearch] = useSearchParams();
   const keyword = (querySearch.get("keyword") ?? "").trim();
@@ -195,6 +200,25 @@ const SearchFilter = () => {
                       </div>
                     )}
                   </div>
+
+                  {Array.isArray(signalItem.mplsMulticast) &&
+                    signalItem.mplsMulticast.length > 0 && (
+                      <div
+                        className="card__mcast"
+                        title="Multicast de salida hacia el MPLS"
+                      >
+                        <span className="card__mcast-title">
+                          Multicast a MPLS
+                        </span>
+                        {uniqueMulticastValues(signalItem.mplsMulticast).map(
+                          (value) => (
+                            <span className="card__mcast-chip" key={value}>
+                              {value}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    )}
 
                   <div className="card__footer">
                     <div className="tech">{signalItem.tipoTecnologia}</div>

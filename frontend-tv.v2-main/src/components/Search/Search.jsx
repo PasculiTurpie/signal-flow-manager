@@ -91,7 +91,7 @@ const Search = () => {
                     {...field}
                     className="input__text-search"
                     type="search"
-                    placeholder="Buscar canal, número, tecnología..."
+                    placeholder="Buscar canal, número, tecnología o IP multicast..."
                     value={term}
                     onChange={(e) => {
                       const value = e.target.value;

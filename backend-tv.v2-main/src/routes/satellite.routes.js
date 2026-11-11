@@ -1,17 +1,19 @@
 const express = require("express");
 const SatelliteController = require("../controllers/satellite.controller");
+const { authRequired } = require("../middleware/authRequired");
+const { requireAdmin } = require("../middleware/requireAdmin");
 
 const router = express.Router();
 
 router
   .route("/satellites")
   .get(SatelliteController.getSatellites)
-  .post(SatelliteController.postSatellite);
+  .post(authRequired, requireAdmin, SatelliteController.postSatellite);
 
 router
   .route("/satellites/:id")
   .get(SatelliteController.getSatelliteById)
-  .put(SatelliteController.updateSatellite)
-  .delete(SatelliteController.deleteSatellite);
+  .put(authRequired, requireAdmin, SatelliteController.updateSatellite)
+  .delete(authRequired, requireAdmin, SatelliteController.deleteSatellite);
 
 module.exports = router;

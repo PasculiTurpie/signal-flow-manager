@@ -4,12 +4,13 @@ const {
   getAuditLogs,
   exportAuditCSV,
 } = require("../controllers/audit.controller");
-const { authProfile } = require("../middleware/validateToken");
+const { authRequired } = require("../middleware/authRequired");
+const { requireAdmin } = require("../middleware/requireAdmin");
 
-// Listado + filtros (público o protegido, según prefieras)
-router.get("/audits", getAuditLogs);
+// Listado + filtros — antes era público, ahora solo admin (son logs sensibles)
+router.get("/audits", authRequired, requireAdmin, getAuditLogs);
 
-// Export CSV (mantengo protegido con authProfile)
-router.get("/audits/export", authProfile, exportAuditCSV);
+// Export CSV
+router.get("/audits/export", authRequired, requireAdmin, exportAuditCSV);
 
 module.exports = router;
