@@ -1,6 +1,11 @@
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import * as XLSX from "xlsx";
 import api from "../../utils/api.js";
+import {
+  construirPlantillaDiagramas,
+  NOMBRE_ARCHIVO_PLANTILLA,
+} from "./plantillaDiagramas.js";
 
 const BulkChannelFisicoUploader = () => {
   const [file, setFile] = useState(null);
@@ -54,6 +59,11 @@ const BulkChannelFisicoUploader = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Igual que en la carga masiva de IRDs: la plantilla se arma en el navegador.
+  const downloadTemplate = () => {
+    XLSX.writeFile(construirPlantillaDiagramas(XLSX), NOMBRE_ARCHIVO_PLANTILLA);
   };
 
   const resetUploader = () => {
@@ -135,11 +145,42 @@ const BulkChannelFisicoUploader = () => {
 
   return (
     <div className="outlet-main" style={{ maxWidth: 900, margin: "0 auto", padding: 20 }}>
-      <h2>Carga Masiva de Diagramas de Canal</h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+          marginBottom: "12px",
+          textAlign: "center",
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Carga Masiva de Diagramas de Canal</h2>
+
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#2196f3",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          Descargar Template
+        </button>
+      </div>
       <p style={{ color: "#666" }}>
-        Sube el archivo <code>carga_masiva_diagramas.xlsx</code> (hoja <code>Diagramas</code> +{" "}
-        <code>Ref_Sitio</code>). Primero se muestra una previsualización sin escribir nada en la
-        base; recién al confirmar se crean/actualizan los diagramas.
+        Sube el archivo <code>carga_masiva_diagramas.xlsx</code> (se lee la hoja{" "}
+        <code>Diagramas</code>; las demás hojas se ignoran). Descarga el template para ver las
+        columnas que se necesitan: trae la hoja <code>Diagramas</code> lista para rellenar y una
+        hoja <code>Instrucciones</code> que explica cada columna. Primero se muestra una
+        previsualización sin escribir nada en la base; recién al confirmar se crean/actualizan los
+        diagramas.
       </p>
 
       {step === 1 && (
